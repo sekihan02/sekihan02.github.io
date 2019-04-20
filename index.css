@@ -4,9 +4,21 @@
     padding: 0;
 }
 
+#clipMask {
+    left: 70%;
+    position: absolute;
+}
+.Layer_1 {
+    position: absolute;
+    left: 2%;
+    top: 5%;
+}
+
+
 .link a,
 a span {
 	display: inline-block;
+    position: absolute;
 }
 a span {
 	transition: .5s;
@@ -65,4 +77,16 @@ a:hover span {
     border-bottom: solid 1px #828a12;
     border-right: none;
     transition: all 0.1s ease-out;
+}
+
+.leaf {
+    top: 5px;
+    float: left;
+    position: absolute;
+}
+
+
+.footer {
+    padding-top: 20px;
+    position: absolute;
 }
