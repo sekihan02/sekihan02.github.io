@@ -17,11 +17,22 @@ cat
         delay: function(cat, i) {
             return 100 + (i * 150);
         },
-        delay:0,
+        delay:0
         // opacity: [0, 1]
         // opacity:{value:[1,0],delay:function(cat, i) {
         //     return 1000 + (i * 150);
         // },}
+    })
+    // 鳥居の表示
+    .add({
+        targets: '.shrine',
+        translateY: [500, 0],
+        scaleX:[5, 1],
+        scale:[0, 1],
+        duration: 1750,
+        delay:250,
+        elasticity: 800,
+        // easing:'easeOutQuint'
     });
 
 // var animObj_1 = anime({
