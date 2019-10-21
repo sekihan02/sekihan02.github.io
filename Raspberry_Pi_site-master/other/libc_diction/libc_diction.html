@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>libc_diction.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: "Segoe WPC", "Segoe UI", "SFUIText-Light", "HelveticaNeue-Light", sans-serif, "Droid Sans Fallback";
+	font-size: 14px;
+	padding: 0 12px;
+	line-height: 22px;
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	color: #4080D0;
+	text-decoration: none;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+h1 code,
+h2 code,
+h3 code,
+h4 code,
+h5 code,
+h6 code {
+	font-size: inherit;
+	line-height: auto;
+}
+
+a:hover {
+	color: #4080D0;
+	text-decoration: underline;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left: 5px solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 14px;
+	line-height: 19px;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+.mac code {
+	font-size: 12px;
+	line-height: 18px;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+/** Theming */
+
+.vscode-light,
+.vscode-light pre code {
+	color: rgb(30, 30, 30);
+}
+
+.vscode-dark,
+.vscode-dark pre code {
+	color: #DDD;
+}
+
+.vscode-high-contrast,
+.vscode-high-contrast pre code {
+	color: white;
+}
+
+.vscode-light code {
+	color: #A31515;
+}
+
+.vscode-dark code {
+	color: #D7BA7D;
+}
+
+.vscode-light pre:not(.hljs),
+.vscode-light code > div {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre:not(.hljs),
+.vscode-dark code > div {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre:not(.hljs),
+.vscode-high-contrast code > div {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+.vscode-light blockquote,
+.vscode-dark blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.vscode-high-contrast blockquote {
+	background: transparent;
+	border-color: #fff;
+}
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family:  "Meiryo", "Segoe WPC", "Segoe UI", "SFUIText-Light", "HelveticaNeue-Light", sans-serif, "Droid Sans Fallback";
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+</head>
+<body>
+<h1 id="%E6%A8%99%E6%BA%96c%E3%83%A9%E3%82%A4%E3%83%96%E3%83%A9%E3%83%AA%E3%82%92%E3%81%AA%E3%82%93%E3%81%A1%E3%82%83%E3%81%A3%E3%81%A6%E5%AE%9F%E8%A3%85-libc-glibc">標準Cライブラリをなんちゃって実装 libc glibc</h1>
+<!-- TOC -->
+<ul>
+<li><a href="#%E6%A8%99%E6%BA%96c%E3%83%A9%E3%82%A4%E3%83%96%E3%83%A9%E3%83%AA%E3%82%92%E3%81%AA%E3%82%93%E3%81%A1%E3%82%83%E3%81%A3%E3%81%A6%E5%AE%9F%E8%A3%85-libc-glibc">標準Cライブラリをなんちゃって実装 libc glibc</a>
+<ul>
+<li><a href="#%E2%96%A0-%E3%81%AF%E3%81%98%E3%82%81%E3%81%AB">■ はじめに</a></li>
+<li><a href="#%E2%96%A0-%E6%A8%99%E6%BA%96c%E3%83%A9%E3%82%A4%E3%83%96%E3%83%A9%E3%83%AA%E3%81%AF%E3%81%A9%E3%81%93%E3%81%AB">■ 標準Cライブラリはどこに</a></li>
+<li><a href="#%E2%96%A0-%E8%A6%8B%E3%81%A6%E3%81%BF%E3%82%8B">■ 見てみる</a></li>
+<li><a href="#%E2%96%A0-stringh">■ string.h</a></li>
+</ul>
+</li>
+</ul>
+<!-- /TOC -->
+<hr>
+<h2 id="%E2%96%A0-%E3%81%AF%E3%81%98%E3%82%81%E3%81%AB">■ はじめに</h2>
+<hr>
+<p>ここから標準Cライブラリを見つつ実装をしながらさらにCを使いこなせるようになろうと思う</p>
+<h2 id="%E2%96%A0-%E6%A8%99%E6%BA%96c%E3%83%A9%E3%82%A4%E3%83%96%E3%83%A9%E3%83%AA%E3%81%AF%E3%81%A9%E3%81%93%E3%81%AB">■ 標準Cライブラリはどこに</h2>
+<hr>
+<p>標準Cライブラリはどのようなソースで動いているのか興味を持っても自分のPCのどこかにあるという事実以外
+どこにソースがあるかわからないかもしれない(とりあえず書いている自分はわからない)</p>
+<p>ここでは標準Cライブラリの確認の方法をまとめる</p>
+<ul>
+<li>1 Glibcをダウンロードする
+標準Cライブラリはlibcと呼ばれ、多くのプログラムで共通して使われるような、システムコールを始めとする基本的な「部品」を集めたもの
+これはオープンソースで公開され、そのソースコードはダウンロードすることができる
+GlibcはLinuxのマシンには標準で入っているGNUが提供する標準Cライブラリ。
+これはgitで取得できる。以下コマンド</li>
+</ul>
+<pre class="hljs"><code><div>git clone git://sourceware.org/git/glibc.git
+</div></code></pre>
+<ul>
+<li>
+<p>2 Webでソースを見る
+Glibcはweb上でも確認できる。さらにUnix系OSのFreeBSDのページはソースを探しやすかったのでリンクを載せる</p>
+<ul>
+<li>
+<p><a href="https://github.com/ceseo/glibc">glibc</a></p>
+</li>
+<li>
+<p><a href="https://svnweb.freebsd.org/base/head/lib/libc/">FreeBSD/libc</a></p>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="%E2%96%A0-%E8%A6%8B%E3%81%A6%E3%81%BF%E3%82%8B">■ 見てみる</h2>
+<hr>
+<p>見てみようにも、たくさんのファイルがあって迷子になってしまったのでstrcpy()を見てみようと思う。</p>
+<ul>
+<li><a href="https://github.com/ceseo/glibc/blob/master/string/strcmp.c">glibc/string/strcmp.c</a></li>
+</ul>
+<pre class="hljs"><code><div><span class="hljs-comment">/* Copyright (C) 1991-2017 Free Software Foundation, Inc.
+   This file is part of the GNU C Library.
+   The GNU C Library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 2.1 of the License, or (at your option) any later version.
+   The GNU C Library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
+   You should have received a copy of the GNU Lesser General Public
+   License along with the GNU C Library; if not, see
+   &lt;http://www.gnu.org/licenses/&gt;.  */</span>
+
+<span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;string.h&gt;</span></span>
+
+<span class="hljs-meta">#<span class="hljs-meta-keyword">undef</span> strcmp</span>
+
+<span class="hljs-meta">#<span class="hljs-meta-keyword">ifndef</span> STRCMP</span>
+<span class="hljs-meta"># <span class="hljs-meta-keyword">define</span> STRCMP strcmp</span>
+<span class="hljs-meta">#<span class="hljs-meta-keyword">endif</span></span>
+
+<span class="hljs-comment">/* Compare S1 and S2, returning less than, equal to or
+   greater than zero if S1 is lexicographically less than,
+   equal to or greater than S2.  */</span>
+<span class="hljs-function"><span class="hljs-keyword">int</span>
+<span class="hljs-title">STRCMP</span> <span class="hljs-params">(<span class="hljs-keyword">const</span> <span class="hljs-keyword">char</span> *p1, <span class="hljs-keyword">const</span> <span class="hljs-keyword">char</span> *p2)</span>
+</span>{
+  <span class="hljs-keyword">const</span> <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">char</span> *s1 = (<span class="hljs-keyword">const</span> <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">char</span> *) p1;
+  <span class="hljs-keyword">const</span> <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">char</span> *s2 = (<span class="hljs-keyword">const</span> <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">char</span> *) p2;
+  <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">char</span> c1, c2;
+
+  <span class="hljs-keyword">do</span>
+    {
+      c1 = (<span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">char</span>) *s1++;
+      c2 = (<span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">char</span>) *s2++;
+      <span class="hljs-keyword">if</span> (c1 == <span class="hljs-string">'\0'</span>)
+	<span class="hljs-keyword">return</span> c1 - c2;
+    }
+  <span class="hljs-keyword">while</span> (c1 == c2);
+
+  <span class="hljs-keyword">return</span> c1 - c2;
+}
+libc_hidden_builtin_def (<span class="hljs-built_in">strcmp</span>)
+</div></code></pre>
+<ul>
+<li><a href="https://svnweb.freebsd.org/base/head/lib/libc/string/strcmp.c?revision=326025&view=markup">FreeBSD
+libc/string/strcpy.c</a></li>
+</ul>
+<pre class="hljs"><code><div><span class="hljs-comment">/*-
+ * SPDX-License-Identifier: BSD-3-Clause
+ *
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Chris Torek.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */</span>
+
+<span class="hljs-meta">#<span class="hljs-meta-keyword">if</span> defined(LIBC_SCCS) &amp;&amp; !defined(lint)</span>
+<span class="hljs-keyword">static</span> <span class="hljs-keyword">char</span> sccsid[] = <span class="hljs-string">"@(#)strcmp.c	8.1 (Berkeley) 6/4/93"</span>;
+<span class="hljs-meta">#<span class="hljs-meta-keyword">endif</span> <span class="hljs-comment">/* LIBC_SCCS and not lint */</span></span>
+<span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;sys/cdefs.h&gt;</span></span>
+__FBSDID(<span class="hljs-string">"$FreeBSD$"</span>);
+
+<span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;string.h&gt;</span></span>
+
+<span class="hljs-comment">/*
+ * Compare strings.
+ */</span>
+<span class="hljs-function"><span class="hljs-keyword">int</span>
+<span class="hljs-title">strcmp</span><span class="hljs-params">(<span class="hljs-keyword">const</span> <span class="hljs-keyword">char</span> *s1, <span class="hljs-keyword">const</span> <span class="hljs-keyword">char</span> *s2)</span>
+</span>{
+	<span class="hljs-keyword">while</span> (*s1 == *s2++)
+		<span class="hljs-keyword">if</span> (*s1++ == <span class="hljs-string">'\0'</span>)
+			<span class="hljs-keyword">return</span> (<span class="hljs-number">0</span>);
+	<span class="hljs-keyword">return</span> (*(<span class="hljs-keyword">const</span> <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">char</span> *)s1 - *(<span class="hljs-keyword">const</span> <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">char</span> *)(s2 - <span class="hljs-number">1</span>));
+}
+</div></code></pre>
+<p>ライセンス表示が長いのとバージョン情報用の変数もあるが本質は一行。
+ほぼコピペだが実装するとこんな感じ</p>
+<pre class="hljs"><code><div><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;stdio.h&gt;</span></span>
+
+<span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">my_strcmp</span><span class="hljs-params">(<span class="hljs-keyword">const</span> <span class="hljs-keyword">char</span> *s1, <span class="hljs-keyword">const</span> <span class="hljs-keyword">char</span> *s2)</span>
+</span>{
+	<span class="hljs-keyword">int</span> i = <span class="hljs-number">0</span>;
+	<span class="hljs-built_in">fprintf</span>(<span class="hljs-built_in">stdout</span>, <span class="hljs-string">"s1 : %s\n"</span>, s1);
+	<span class="hljs-built_in">fprintf</span>(<span class="hljs-built_in">stdout</span>, <span class="hljs-string">"s2 : %s\n"</span>, s2);
+
+	<span class="hljs-keyword">while</span> (*s1 == *s2++)
+	{
+		<span class="hljs-built_in">fprintf</span>(<span class="hljs-built_in">stdout</span>, <span class="hljs-string">"count : %d\n"</span>, i);
+		
+		<span class="hljs-built_in">fprintf</span>(<span class="hljs-built_in">stdout</span>, <span class="hljs-string">"s1 : %c\n"</span>, *s1);
+		<span class="hljs-built_in">fprintf</span>(<span class="hljs-built_in">stdout</span>, <span class="hljs-string">"s2 : %c\n"</span>, *s2);
+		
+		<span class="hljs-keyword">if</span> (*s1++ == <span class="hljs-string">'\0'</span>)
+		{
+			<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;
+		}
+		i++;
+	}
+	<span class="hljs-keyword">return</span>(*s1 - * (s2<span class="hljs-number">-1</span>));
+}
+
+<span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">main</span><span class="hljs-params">(<span class="hljs-keyword">int</span> argc, <span class="hljs-keyword">char</span> <span class="hljs-keyword">const</span> *argv[])</span>
+</span>{
+	<span class="hljs-keyword">int</span> res;
+
+	<span class="hljs-keyword">if</span> (argc &lt; <span class="hljs-number">2</span>)
+	{
+		<span class="hljs-built_in">fprintf</span>(<span class="hljs-built_in">stdout</span>, <span class="hljs-string">"Few argc error\n"</span>);
+		<span class="hljs-keyword">return</span> <span class="hljs-number">1</span>;
+	}
+	res = my_strcmp(argv[<span class="hljs-number">1</span>], argv[<span class="hljs-number">2</span>]);
+
+	<span class="hljs-built_in">fprintf</span>(<span class="hljs-built_in">stdout</span>, <span class="hljs-string">"%d\n"</span>, res);
+	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;
+}
+</div></code></pre>
+<p>実行例</p>
+<pre class="hljs"><code><div>&gt;strcmp.exe hello hello
+s1 : hello
+s2 : hello
+count : 0
+s1 : h
+s2 : e
+count : 1
+s1 : e
+s2 : l
+count : 2
+s1 : l
+s2 : l
+count : 3
+s1 : l
+s2 : o
+count : 4
+s1 : o
+s2 :
+count : 5
+s1 :
+s2 : ﾁ
+0
+&gt;strcmp.exe hello HELLO
+s1 : hello
+s2 : HELLO
+32
+&gt;strcmp.exe hello Hello
+s1 : hello
+s2 : Hello
+32
+&gt;strcmp.exe hello hells
+s1 : hello
+s2 : hells
+count : 0
+s1 : h
+s2 : e
+count : 1
+s1 : e
+s2 : l
+count : 2
+s1 : l
+s2 : l
+count : 3
+s1 : l
+s2 : s
+-4
+</div></code></pre>
+<p>ソースの内容は意外と違うので読み物として面白いと思う。
+次からは自分なりに標準Cライブラリを実装していく</p>
+<h2 id="%E2%96%A0-stringh">■ string.h</h2>
+<hr>
+<p>文字列操作関数の定義</p>
+<table>
+<thead>
+<tr>
+<th>関数名</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>memcpy</td>
+<td>オブジェクトを指定文字数分コピー</td>
+</tr>
+<tr>
+<td>memmove</td>
+<td>オブジェクトを指定文字数分コピー</td>
+</tr>
+<tr>
+<td>strcpy</td>
+<td>文字列をコピー</td>
+</tr>
+<tr>
+<td>strncpy</td>
+<td>文字列を指定文字数分コピー</td>
+</tr>
+</tbody>
+</table>
+
+</body>
+</html>

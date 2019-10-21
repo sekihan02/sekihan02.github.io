@@ -1,0 +1,59 @@
+#contact {
+	background-color: #333333;
+	background-image:  url(../Images/contact.png);
+	min-height: 100vh;
+}
+#contact .page-title {
+	/* text-align: center; */
+	margin-left: 24px;
+	padding-top: 96px;
+}
+.page-title {
+	font-size: 5rem;
+	font-family: 'Philosopher', serif;
+	color: #fafafa;
+	-webkit-text-stroke: 2px #333;
+}
+
+#sns {
+	font-size: 2rem;
+	background: #eff0f0;
+	opacity: 0.95;
+	font-family: 'Philosopher', serif;
+	padding: 4% 0;
+}
+#sns .wrapper {
+	display: flex;
+	justify-content: space-evenly;
+	/* margin-left: 5%; */
+}
+#sns .sub-title {
+	margin-bottom: 30px;
+}
+.sns-box {
+	width: 30%;
+}
+/* モバイル表示 */
+@media(max-width: 720px) {
+	#contact .page-title {
+		font-size: 2.5rem;
+		padding-top: 160px;
+	}
+	#contact .wrapper p {
+		font-size: 0.7rem;
+	}
+
+	#location .wrapper,
+	#sns .wrapper {
+		flex-direction: column;
+	}
+	.location-info,
+	.location-map,
+	.sns-box {
+		width: 100%;
+	}
+
+	.sub-title {
+		font-size: 1.5rem;
+	}
+}

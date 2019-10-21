@@ -1,0 +1,55 @@
+#pin1 {
+	position: absolute;
+	left: 746px;
+	top: 120px;
+}
+#pin2 {
+	position: absolute;
+	left: 570px;
+	top: 340px;
+}
+#pin3 {
+	position: absolute;
+	left: 740px;
+	top: 530px;
+}
+.pin-solid.icon {
+	color: rgb(0, 0, 22);
+	position: absolute;
+	margin-left: 8px;
+	margin-top: 4px;
+
+	width: 24px;
+	height: 24px;
+
+	box-shadow: lightgoldenrodyellow 0px 0px 20px;
+
+	border: solid 2px currentColor;
+	border-radius: 14px 14px 14px 0;
+	background-color: currentColor;
+	-webkit-transform: rotate(-45deg);
+			transform: rotate(-45deg);
+}
+
+.pin-solid.icon:before {
+	content: '';
+	position: absolute;
+	left: 6px;
+	top: 6px;
+
+	width: 8px;
+	height: 8px;
+
+	color: white;
+	border: solid 2px currentColor;
+	border-radius: 6px;
+	background-color: currentColor;
+}
+.pin-solid.icon:hover {
+	/* color: #c9171e; */
+	color: red;
+	box-shadow: rgb(0, 0, 22) 0px 0px 10px ;
+	cursor: pointer;
+	transition: box-shadow 1.5s;
+	transition: color .25s;
+}

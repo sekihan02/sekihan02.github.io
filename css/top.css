@@ -1,0 +1,44 @@
+#home {
+	background-color: #333333;
+	background-image: url(../Images/mainScreen.png), linear-gradient(#fafafa, #333);
+	background-blend-mode: luminosity;
+	min-height: 100vh;
+}
+
+#home .page-title {
+	text-transform: none;
+}
+
+.home-content {
+	text-align: center;
+	color: #fafafa;
+	padding-top: 15%;
+}
+.home-content p {
+	font-size: 1.125rem;
+	margin: 10px 0 42px;
+}
+
+.page-title {
+	font-size: 5rem;
+	font-family: 'Philosopher', serif;
+	background-color: rgb(0,0,0, 0.7);
+}
+
+.button {
+	position: relative;
+	display: inline-block;
+	font-weight: bold;
+	padding: 0.5em 1em;
+	text-decoration: none;
+	border-left: solid 4px #113285;
+	border-right: solid 4px #113285;
+	color: #113285;
+	background: #eff0f0;
+	transition: .4s;
+}
+
+.button:hover {
+	background: #113285;
+	color: #FFF;
+}

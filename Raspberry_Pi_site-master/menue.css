@@ -1,0 +1,134 @@
+.main_menue {
+	margin: 0;
+	padding: 0;
+
+	font-family: 'DateFont';
+	font-size: 225%;
+	line-height: 45px;
+	
+}
+
+.menu a {
+	list-style: none;
+	/* font-weight:bold; */
+	background-color: red;
+	/* background-color: rgb(0, 0, 22); */
+	color: lightgoldenrodyellow;
+}
+
+.menu li {
+	list-style: none;
+	font-weight:bold;
+}
+
+.menu li a {
+	display: table;
+	margin-top: 1px;
+	padding: 0px 10px;
+	width: 170px;
+	text-decoration: none;
+	text-align: left;
+	background-color: red;
+	/* background-color: rgb(0, 0, 22); */
+	color: whitesmoke;
+	/* overflow: hidden; */
+}
+
+.menu li ul li a {
+	/* display: block; */
+	display: table;
+	/* margin-top: 8px; */
+	padding: 6 10px;
+	height: 35px;
+	width: 150px;
+	background: lightgoldenrodyellow;
+	color: rgb(0, 0, 22);
+
+	font-size: 65%;
+}
+
+
+#analysis_drop {
+	/* width:30%; */
+	/* height:100px; */
+	/* background: rgb(0, 0, 22); */
+	
+	/* background-color: rgb(0, 0, 22); */
+	position: absolute;
+	
+	/*メニューの幅*/
+	width: 180px;
+	height: 45px;
+
+	top: 90px;
+	left: 555px;
+
+	margin:0 auto;
+	text-align:center;
+	transform:skew(15deg,15deg);
+
+}
+
+#file-shar_drop {
+	/* width:30%; */
+	/* height:100px; */
+	/* background: rgb(0, 0, 22); */
+	
+	position: absolute;
+	
+	/*メニューの幅*/
+	width: 180px;
+	height: 45px;
+
+	top: 360px;
+	left: 620px;
+
+	margin:0 auto;
+	text-align:center;
+	transform:skew(15deg,15deg);
+
+}
+
+#other_drop {
+	/* width:30%; */
+	/* height:100px; */
+	/* background: rgb(0, 0, 22); */
+	
+	position: absolute;
+	
+	/*メニューの幅*/
+	width: 180px;
+	height: 45px;
+
+	top: 500px;
+	left: 550px;
+
+	margin:0 auto;
+	text-align:center;
+	transform:skew(15deg,15deg);
+
+}
+
+.menu li a:hover {
+	/* background-color: red; */
+	/* color: rgb(0, 0, 22); */
+	cursor: pointer;
+	background-color: red;
+	/* text-decoration:underline; */
+	transition: background-color .5s;
+	transition: color .15s;
+	background:linear-gradient(transparent 75%, rgb(0, 0, 22) 45%);
+	font-weight:bold;
+}
+.menu li a:hover {
+	background-color: red;
+	/* color: whitesmoke; */
+}
+.menu ul li a:hover {
+	background-color: lightgoldenrodyellow;
+	/* color: whitesmoke; */
+}
+
+.menu #pin1 #analysis_drop:hover {
+	
+}
