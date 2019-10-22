@@ -123,3 +123,28 @@ footer {
 	}
 
 }
+
+
+@media(max-width: 450px) {
+	
+	.header {
+		height: 200px;
+		font-size: 1rem;
+		margin-top: 10px;
+		flex-direction: column;
+		align-items: center;
+	}
+	.header-right a:hover {
+		width: 80px;
+		height: 40px;
+		color: #ffffff;
+		border-radius: 0.5em;
+		border: 1px solid #113285;
+		background-color: #113285;
+	}
+
+	.home-content {
+		margin-top: 20%;
+	}
+
+}

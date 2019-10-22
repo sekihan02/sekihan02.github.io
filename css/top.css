@@ -42,3 +42,15 @@
 	background: #113285;
 	color: #FFF;
 }
+
+/* モバイル表示 */
+@media(max-width: 720px) {
+	#home .page-title {
+		font-size: 2.5rem;
+		padding-top: 160px;
+	}
+	#home .wrapper p {
+		font-size: 0.7rem;
+	}
+
+}
