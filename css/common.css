@@ -128,7 +128,7 @@ footer {
 @media(max-width: 450px) {
 	
 	.header {
-		height: 200px;
+		height: 230px;
 		font-size: 1rem;
 		margin-top: 10px;
 		flex-direction: column;

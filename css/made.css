@@ -45,3 +45,13 @@
 	}
 
 }
+
+@media(max-width: 450px) {
+	.grid {
+		display: grid;
+		gap: 26px;
+		grid-template-columns: repeat(1, minmax(120px, 1fr));
+		margin-top: 10%;
+		margin-bottom: 50px;
+	}
+}
