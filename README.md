@@ -1,76 +1,55 @@
 # 道草ログ
 
-`道草ログ` は、MDX 記事と記事内チャットを組み合わせた日本語の技術ブログです。
-公開サイトは `GitHub Pages`、チャット API は `Vercel` を前提にしています。
+道草ログは、実装を読み解きながら技術的な仕組みを丁寧にまとめていく個人ブログです。ZIP、OCR、バイナリ解析、実装読解のような題材を、記事として蓄積していくことを目的にしています。
 
-## 構成
+公開サイト:
 
-```text
-apps/
-  site/           Next.js の静的サイト
-  agent-vercel/   Vercel 用 Python API
-content/
-  articles/       記事の MDX
-  generated/      記事 manifest / 検索インデックス
-scripts/
-  content/        manifest 生成
-tests/
-  site/           Node テスト
-  agent/          Python テスト
+- https://sekihan02.github.io/
+
+## このリポジトリについて
+
+このリポジトリは、公開中の道草ログのソースコードと記事データを管理するためのものです。サイト本体は静的に生成され、GitHub Pages で配信されます。
+
+主な構成:
+
+- `apps/site`: ブログ本体の Next.js アプリケーション
+- `content/articles`: 記事データ
+- `content/generated`: サイト表示に使う生成済みデータ
+- `scripts/content`: 記事データの生成スクリプト
+- `tests`: サイトと補助機能のテスト
+
+## ローカルで確認する
+
+前提:
+
+- Node.js 22 以上
+
+セットアップ:
+
+```bash
+npm install
+npm run dev
 ```
 
-## ローカル開発
+開発サーバー:
 
-1. `npm install`
-2. 必要なら `.env.example` を `.env.local` にコピーして調整する
-3. サイトを起動する: `npm run dev:site`
-4. API を起動する: `npm run dev:agent`
-
-ローカル確認 URL:
-
-- サイト: `http://127.0.0.1:3000`
-- API: `http://127.0.0.1:8787`
+- http://127.0.0.1:3000
 
 ## よく使うコマンド
 
-- `npm run content:build`
-- `npm run typecheck`
-- `npm run test`
-- `npm run build:pages`
-- `powershell -ExecutionPolicy Bypass -File .\scripts\new-article.ps1 -Title "記事タイトル" -Slug "article-slug" -Category "ZIP" -Tags ZIP,Deflate`
+```bash
+npm run content:build
+npm run typecheck
+npm run test
+npm run build:pages
+```
 
-## GitHub Pages
+## 記事の追加
 
-`.github/workflows/deploy-pages.yml` が `main` への push で静的ビルドし、`apps/site/out` を GitHub Pages へ配備します。
+記事は `content/articles` に追加します。記事データを更新したあとに `main` へ push すると、GitHub Pages 用のビルドと公開が自動で実行されます。
 
-GitHub repository variables:
+## デプロイ
 
-- `NEXT_PUBLIC_AGENT_API_URL`: Vercel の本番 URL
-- `GOOGLE_SITE_VERIFICATION`: Search Console の HTML タグ用 verification code
+GitHub Actions で静的サイトをビルドし、その成果物を GitHub Pages に公開しています。公開先は次の URL です。
 
-公開 URL は `https://sekihan02.github.io/` です。
-
-## Vercel
-
-Vercel project は同じ GitHub repo を使い、root directory を `apps/agent-vercel` に設定します。
-
-Vercel environment variables:
-
-- `SITE_NAME=道草ログ`
-- `ALLOWED_ORIGINS=https://sekihan02.github.io,http://127.0.0.1:3000`
-- `SITE_DATA_BASE_URL=https://sekihan02.github.io`
-- `FALLBACK_INDEX_URL=https://sekihan02.github.io/data/search-index.json`
-- `MAX_REQUEST_BYTES=16384`
-- `MAX_QUESTION_CHARS=500`
-
-エンドポイント:
-
-- `/healthz`
-- `/v1/search`
-- `/v1/chat`
-
-## Search Console
-
-公開後は `https://sekihan02.github.io/` を Search Console に追加し、`https://sekihan02.github.io/sitemap.xml` を送信します。
-代表ページは URL Inspection から再クロール依頼してください。
-
+- https://sekihan02.github.io/
