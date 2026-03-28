@@ -1,0 +1,7 @@
+[project]
+name = "michikusa-log-agent-vercel"
+version = "0.1.0"
+description = "Vercel Python API for Michikusa Log."
+requires-python = ">=3.12"
+dependencies = []
+

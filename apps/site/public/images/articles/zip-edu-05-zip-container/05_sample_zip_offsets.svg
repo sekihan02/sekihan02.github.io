@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1150" height="360" viewBox="0 0 1150 360">
+  <style>
+    .title { font: 700 28px "Noto Sans JP", sans-serif; fill: #111827; }
+    .label { font: 700 16px "Noto Sans JP", sans-serif; fill: #111827; }
+    .small { font: 14px "Noto Sans JP", sans-serif; fill: #374151; }
+    .box { stroke: #1f2937; stroke-width: 2; }
+  </style>
+  <text x="40" y="42" class="title">`sample.zip` の実際のオフセット</text>
+  <rect x="40" y="120" width="165" height="86" fill="#dbeafe" class="box"/>
+  <rect x="205" y="120" width="80" height="86" fill="#dcfce7" class="box"/>
+  <rect x="285" y="120" width="82" height="86" fill="#fef3c7" class="box"/>
+  <rect x="367" y="120" width="183" height="86" fill="#dbeafe" class="box"/>
+  <rect x="550" y="120" width="95" height="86" fill="#dcfce7" class="box"/>
+  <rect x="645" y="120" width="98" height="86" fill="#fef3c7" class="box"/>
+  <rect x="743" y="120" width="297" height="86" fill="#fde68a" class="box"/>
+  <rect x="1040" y="120" width="70" height="86" fill="#fecaca" class="box"/>
+  <text x="122" y="146" text-anchor="middle" class="label">ローカルヘッダ #1</text>
+  <text x="122" y="170" text-anchor="middle" class="small">0 - 40</text>
+  <text x="245" y="146" text-anchor="middle" class="label">データ #1</text>
+  <text x="245" y="170" text-anchor="middle" class="small">41 - 50</text>
+  <text x="326" y="146" text-anchor="middle" class="label">Desc #1</text>
+  <text x="326" y="170" text-anchor="middle" class="small">51 - 66</text>
+  <text x="458" y="146" text-anchor="middle" class="label">ローカルヘッダ #2</text>
+  <text x="458" y="170" text-anchor="middle" class="small">67 - 112</text>
+  <text x="598" y="146" text-anchor="middle" class="label">データ #2</text>
+  <text x="598" y="170" text-anchor="middle" class="small">113 - 126</text>
+  <text x="694" y="146" text-anchor="middle" class="label">Desc #2</text>
+  <text x="694" y="170" text-anchor="middle" class="small">127 - 142</text>
+  <text x="892" y="146" text-anchor="middle" class="label">中央ディレクトリ</text>
+  <text x="892" y="170" text-anchor="middle" class="small">143 - 261</text>
+  <text x="1075" y="146" text-anchor="middle" class="label">EOCD</text>
+  <text x="1075" y="170" text-anchor="middle" class="small">262 - 283</text>
+  <text x="40" y="255" class="small">`explain-zip` の出力から、各レコードの開始位置をそのまま図にしたもの。</text>
+  <text x="40" y="280" class="small">ZIP を理解するときは「何の情報が何バイト目にあるか」を追えるようになることが大事。</text>
+  <text x="40" y="305" class="small">このサンプルは小さいので、ヘッダや目次の存在が見えやすい。</text>
+</svg>

@@ -1,0 +1,287 @@
+{
+  "generatedAt": "2026-03-28T08:22:24.684Z",
+  "related": {
+    "michikusa-log-intro": [
+      {
+        "slug": "ndlocr-lite-ocr-pipeline",
+        "title": "NDLOCR-LiteのOCR処理を分解してみる",
+        "url": "/articles/ndlocr-lite-ocr-pipeline/",
+        "score": 0,
+        "reasons": [
+          "関連度スコア"
+        ]
+      },
+      {
+        "slug": "zip-edu-01-overview",
+        "title": "第1回: ZIP実装を読む前に、ZIPが何をしている形式か整理する",
+        "url": "/articles/zip-edu-01-overview/",
+        "score": 0,
+        "reasons": [
+          "関連度スコア"
+        ]
+      },
+      {
+        "slug": "zip-edu-02-lz77",
+        "title": "第2回: ZIP実装を読みながらLZ77の仕組みを理解する",
+        "url": "/articles/zip-edu-02-lz77/",
+        "score": 0,
+        "reasons": [
+          "関連度スコア"
+        ]
+      }
+    ],
+    "ndlocr-lite-ocr-pipeline": [
+      {
+        "slug": "michikusa-log-intro",
+        "title": "道草ログについて",
+        "url": "/articles/michikusa-log-intro/",
+        "score": 0,
+        "reasons": [
+          "関連度スコア"
+        ]
+      },
+      {
+        "slug": "zip-edu-01-overview",
+        "title": "第1回: ZIP実装を読む前に、ZIPが何をしている形式か整理する",
+        "url": "/articles/zip-edu-01-overview/",
+        "score": 0,
+        "reasons": [
+          "関連度スコア"
+        ]
+      },
+      {
+        "slug": "zip-edu-02-lz77",
+        "title": "第2回: ZIP実装を読みながらLZ77の仕組みを理解する",
+        "url": "/articles/zip-edu-02-lz77/",
+        "score": 0,
+        "reasons": [
+          "関連度スコア"
+        ]
+      }
+    ],
+    "zip-edu-01-overview": [
+      {
+        "slug": "zip-edu-02-lz77",
+        "title": "第2回: ZIP実装を読みながらLZ77の仕組みを理解する",
+        "url": "/articles/zip-edu-02-lz77/",
+        "score": 0.4,
+        "reasons": [
+          "カテゴリ一致: ZIP",
+          "タグ一致: ZIP"
+        ]
+      },
+      {
+        "slug": "zip-edu-03-huffman-and-deflate",
+        "title": "第3回: ZIP実装を読みながらハフマン符号とDeflateを理解する",
+        "url": "/articles/zip-edu-03-huffman-and-deflate/",
+        "score": 0.4,
+        "reasons": [
+          "カテゴリ一致: ZIP",
+          "タグ一致: ZIP"
+        ]
+      },
+      {
+        "slug": "zip-edu-04-bitstream-and-blocks",
+        "title": "第4回: ZIP実装を読みながらDeflateのブロックとビット列を理解する",
+        "url": "/articles/zip-edu-04-bitstream-and-blocks/",
+        "score": 0.4,
+        "reasons": [
+          "カテゴリ一致: ZIP",
+          "タグ一致: ZIP"
+        ]
+      }
+    ],
+    "zip-edu-02-lz77": [
+      {
+        "slug": "zip-edu-03-huffman-and-deflate",
+        "title": "第3回: ZIP実装を読みながらハフマン符号とDeflateを理解する",
+        "url": "/articles/zip-edu-03-huffman-and-deflate/",
+        "score": 0.475,
+        "reasons": [
+          "カテゴリ一致: ZIP",
+          "タグ一致: ZIP"
+        ]
+      },
+      {
+        "slug": "zip-edu-04-bitstream-and-blocks",
+        "title": "第4回: ZIP実装を読みながらDeflateのブロックとビット列を理解する",
+        "url": "/articles/zip-edu-04-bitstream-and-blocks/",
+        "score": 0.475,
+        "reasons": [
+          "カテゴリ一致: ZIP",
+          "タグ一致: ZIP"
+        ]
+      },
+      {
+        "slug": "zip-edu-01-overview",
+        "title": "第1回: ZIP実装を読む前に、ZIPが何をしている形式か整理する",
+        "url": "/articles/zip-edu-01-overview/",
+        "score": 0.4,
+        "reasons": [
+          "カテゴリ一致: ZIP",
+          "タグ一致: ZIP"
+        ]
+      }
+    ],
+    "zip-edu-03-huffman-and-deflate": [
+      {
+        "slug": "zip-edu-02-lz77",
+        "title": "第2回: ZIP実装を読みながらLZ77の仕組みを理解する",
+        "url": "/articles/zip-edu-02-lz77/",
+        "score": 0.475,
+        "reasons": [
+          "カテゴリ一致: ZIP",
+          "タグ一致: ZIP"
+        ]
+      },
+      {
+        "slug": "zip-edu-04-bitstream-and-blocks",
+        "title": "第4回: ZIP実装を読みながらDeflateのブロックとビット列を理解する",
+        "url": "/articles/zip-edu-04-bitstream-and-blocks/",
+        "score": 0.475,
+        "reasons": [
+          "カテゴリ一致: ZIP",
+          "タグ一致: ZIP"
+        ]
+      },
+      {
+        "slug": "zip-edu-01-overview",
+        "title": "第1回: ZIP実装を読む前に、ZIPが何をしている形式か整理する",
+        "url": "/articles/zip-edu-01-overview/",
+        "score": 0.4,
+        "reasons": [
+          "カテゴリ一致: ZIP",
+          "タグ一致: ZIP"
+        ]
+      }
+    ],
+    "zip-edu-04-bitstream-and-blocks": [
+      {
+        "slug": "zip-edu-02-lz77",
+        "title": "第2回: ZIP実装を読みながらLZ77の仕組みを理解する",
+        "url": "/articles/zip-edu-02-lz77/",
+        "score": 0.475,
+        "reasons": [
+          "カテゴリ一致: ZIP",
+          "タグ一致: ZIP"
+        ]
+      },
+      {
+        "slug": "zip-edu-03-huffman-and-deflate",
+        "title": "第3回: ZIP実装を読みながらハフマン符号とDeflateを理解する",
+        "url": "/articles/zip-edu-03-huffman-and-deflate/",
+        "score": 0.475,
+        "reasons": [
+          "カテゴリ一致: ZIP",
+          "タグ一致: ZIP"
+        ]
+      },
+      {
+        "slug": "zip-edu-01-overview",
+        "title": "第1回: ZIP実装を読む前に、ZIPが何をしている形式か整理する",
+        "url": "/articles/zip-edu-01-overview/",
+        "score": 0.4,
+        "reasons": [
+          "カテゴリ一致: ZIP",
+          "タグ一致: ZIP"
+        ]
+      }
+    ],
+    "zip-edu-05-zip-container": [
+      {
+        "slug": "zip-edu-01-overview",
+        "title": "第1回: ZIP実装を読む前に、ZIPが何をしている形式か整理する",
+        "url": "/articles/zip-edu-01-overview/",
+        "score": 0.4,
+        "reasons": [
+          "カテゴリ一致: ZIP",
+          "タグ一致: ZIP"
+        ]
+      },
+      {
+        "slug": "zip-edu-02-lz77",
+        "title": "第2回: ZIP実装を読みながらLZ77の仕組みを理解する",
+        "url": "/articles/zip-edu-02-lz77/",
+        "score": 0.325,
+        "reasons": [
+          "カテゴリ一致: ZIP",
+          "タグ一致: ZIP"
+        ]
+      },
+      {
+        "slug": "zip-edu-03-huffman-and-deflate",
+        "title": "第3回: ZIP実装を読みながらハフマン符号とDeflateを理解する",
+        "url": "/articles/zip-edu-03-huffman-and-deflate/",
+        "score": 0.325,
+        "reasons": [
+          "カテゴリ一致: ZIP",
+          "タグ一致: ZIP"
+        ]
+      }
+    ],
+    "zip-edu-06-repo-walkthrough": [
+      {
+        "slug": "zip-edu-01-overview",
+        "title": "第1回: ZIP実装を読む前に、ZIPが何をしている形式か整理する",
+        "url": "/articles/zip-edu-01-overview/",
+        "score": 0.4,
+        "reasons": [
+          "カテゴリ一致: ZIP",
+          "タグ一致: ZIP"
+        ]
+      },
+      {
+        "slug": "zip-edu-02-lz77",
+        "title": "第2回: ZIP実装を読みながらLZ77の仕組みを理解する",
+        "url": "/articles/zip-edu-02-lz77/",
+        "score": 0.4,
+        "reasons": [
+          "カテゴリ一致: ZIP",
+          "タグ一致: ZIP"
+        ]
+      },
+      {
+        "slug": "zip-edu-03-huffman-and-deflate",
+        "title": "第3回: ZIP実装を読みながらハフマン符号とDeflateを理解する",
+        "url": "/articles/zip-edu-03-huffman-and-deflate/",
+        "score": 0.4,
+        "reasons": [
+          "カテゴリ一致: ZIP",
+          "タグ一致: ZIP"
+        ]
+      }
+    ],
+    "zip-edu-07-advanced-topics": [
+      {
+        "slug": "zip-edu-01-overview",
+        "title": "第1回: ZIP実装を読む前に、ZIPが何をしている形式か整理する",
+        "url": "/articles/zip-edu-01-overview/",
+        "score": 0.4,
+        "reasons": [
+          "カテゴリ一致: ZIP",
+          "タグ一致: ZIP"
+        ]
+      },
+      {
+        "slug": "zip-edu-02-lz77",
+        "title": "第2回: ZIP実装を読みながらLZ77の仕組みを理解する",
+        "url": "/articles/zip-edu-02-lz77/",
+        "score": 0.4,
+        "reasons": [
+          "カテゴリ一致: ZIP",
+          "タグ一致: ZIP"
+        ]
+      },
+      {
+        "slug": "zip-edu-03-huffman-and-deflate",
+        "title": "第3回: ZIP実装を読みながらハフマン符号とDeflateを理解する",
+        "url": "/articles/zip-edu-03-huffman-and-deflate/",
+        "score": 0.4,
+        "reasons": [
+          "カテゴリ一致: ZIP",
+          "タグ一致: ZIP"
+        ]
+      }
+    ]
+  }
+}

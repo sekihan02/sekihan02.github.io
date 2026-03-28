@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="760" viewBox="0 0 1100 760">
+  <style>
+    .title { font: 700 28px "Noto Sans JP", sans-serif; fill: #111827; }
+    .label { font: 700 18px "Noto Sans JP", sans-serif; fill: #111827; }
+    .small { font: 14px "Noto Sans JP", sans-serif; fill: #374151; }
+    .mono { font: 14px "SFMono-Regular", Consolas, monospace; fill: #1f2937; }
+    .mono-center { font: 14px "SFMono-Regular", Consolas, monospace; fill: #1f2937; text-anchor: middle; }
+    .box { stroke: #1f2937; stroke-width: 2; rx: 14; ry: 14; }
+    .cell { stroke: #1f2937; stroke-width: 2; }
+    .arrow { stroke: #1f2937; stroke-width: 3; fill: none; }
+  </style>
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#111827"/>
+    </marker>
+  </defs>
+
+  <text x="40" y="42" class="title">LSB-first の感覚: 下位ビット側から順に積んで 1 バイトになる</text>
+  <text x="40" y="82" class="label">例: BFINAL=1, BTYPE=01 を 3 ビット書くとき</text>
+
+  <rect x="40" y="114" width="430" height="96" fill="#dcfce7" class="box"/>
+  <text x="80" y="146" class="label">1 手目</text>
+  <text x="80" y="174" class="mono">BFINAL = 1</text>
+  <text x="80" y="198" class="small">最後のブロック印を 1 ビット書く</text>
+
+  <rect x="40" y="226" width="430" height="96" fill="#dbeafe" class="box"/>
+  <text x="80" y="258" class="label">2 手目</text>
+  <text x="80" y="286" class="mono">BTYPE low = 1</text>
+  <text x="80" y="310" class="small">fixed(01) の下位ビットを積む</text>
+
+  <rect x="40" y="338" width="430" height="96" fill="#dbeafe" class="box"/>
+  <text x="80" y="370" class="label">3 手目</text>
+  <text x="80" y="398" class="mono">BTYPE high = 0</text>
+  <text x="80" y="422" class="small">fixed(01) の上位ビットを積む</text>
+
+  <rect x="520" y="114" width="540" height="190" fill="#fef3c7" class="box"/>
+  <text x="560" y="146" class="label">BitWriter.write_bits() の動き</text>
+  <text x="560" y="178" class="mono">_bit_buf |= (value &amp; mask) &lt;&lt; _bit_count</text>
+  <text x="560" y="204" class="mono">_bit_count += count</text>
+  <text x="560" y="238" class="small">新しいビットは左からではなく、空いている最下位側へ追加される</text>
+  <text x="560" y="264" class="small">だから 1 手目, 2 手目, 3 手目の順がそのまま bit0, bit1, bit2 になる</text>
+  <text x="560" y="290" class="small">8 ビットたまった瞬間に 1 バイトとして出力される</text>
+
+  <rect x="40" y="458" width="300" height="54" fill="#ffffff" class="box"/>
+  <text x="190" y="482" text-anchor="middle" class="small">1 手目 → 2 手目 → 3 手目</text>
+  <text x="190" y="504" text-anchor="middle" class="small">の順でバッファへ入る</text>
+  <path d="M390 486 H 620 V 560 H 205 V 612" class="arrow" marker-end="url(#arrowhead)"/>
+
+  <text x="40" y="560" class="label">バッファの見え方</text>
+  <text x="40" y="586" class="small">最初の 3 ビットだけ先に埋まり、残りはまだ空いている</text>
+
+  <g transform="translate(40,624)">
+    <rect x="0" y="0" width="110" height="36" fill="#dcfce7" class="cell"/>
+    <rect x="110" y="0" width="110" height="36" fill="#dbeafe" class="cell"/>
+    <rect x="220" y="0" width="110" height="36" fill="#dbeafe" class="cell"/>
+    <rect x="330" y="0" width="110" height="36" fill="#ffffff" class="cell"/>
+    <rect x="440" y="0" width="110" height="36" fill="#ffffff" class="cell"/>
+    <rect x="550" y="0" width="110" height="36" fill="#ffffff" class="cell"/>
+    <rect x="660" y="0" width="110" height="36" fill="#ffffff" class="cell"/>
+    <rect x="770" y="0" width="110" height="36" fill="#ffffff" class="cell"/>
+
+    <text x="55" y="23" class="mono-center">1</text>
+    <text x="165" y="23" class="mono-center">1</text>
+    <text x="275" y="23" class="mono-center">0</text>
+    <text x="385" y="23" class="mono-center">.</text>
+    <text x="495" y="23" class="mono-center">.</text>
+    <text x="605" y="23" class="mono-center">.</text>
+    <text x="715" y="23" class="mono-center">.</text>
+    <text x="825" y="23" class="mono-center">.</text>
+
+    <text x="55" y="60" text-anchor="middle" class="small">bit0</text>
+    <text x="165" y="60" text-anchor="middle" class="small">bit1</text>
+    <text x="275" y="60" text-anchor="middle" class="small">bit2</text>
+    <text x="385" y="60" text-anchor="middle" class="small">bit3</text>
+    <text x="495" y="60" text-anchor="middle" class="small">bit4</text>
+    <text x="605" y="60" text-anchor="middle" class="small">bit5</text>
+    <text x="715" y="60" text-anchor="middle" class="small">bit6</text>
+    <text x="825" y="60" text-anchor="middle" class="small">bit7</text>
+
+    <rect x="0" y="-18" width="330" height="54" fill="none" stroke="#111827" stroke-width="2" stroke-dasharray="5 4"/>
+  </g>
+
+  <rect x="420" y="686" width="260" height="38" fill="#ffffff" class="box"/>
+  <text x="550" y="710" text-anchor="middle" class="small">破線の範囲が、先に 1 / 1 / 0 で埋まる</text>
+</svg>

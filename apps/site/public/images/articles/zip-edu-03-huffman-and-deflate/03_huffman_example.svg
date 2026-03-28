@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="330" viewBox="0 0 1100 330">
+  <style>
+    .title { font: 700 28px "Noto Sans JP", sans-serif; fill: #111827; }
+    .label { font: 700 18px "Noto Sans JP", sans-serif; fill: #111827; }
+    .small { font: 14px "Noto Sans JP", sans-serif; fill: #374151; }
+    .box { stroke: #1f2937; stroke-width: 2; rx: 12; ry: 12; }
+  </style>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#111827"/>
+    </marker>
+  </defs>
+  <text x="40" y="42" class="title">具体例: 頻度が偏ると平均の符号長が短くなる</text>
+  <rect x="40" y="90" width="260" height="180" fill="#e0f2fe" class="box"/>
+  <text x="170" y="125" text-anchor="middle" class="label">入力シンボル</text>
+  <text x="80" y="165" class="small">A, A, A, A, A, A, A, A</text>
+  <text x="80" y="195" class="small">B, B, B, B</text>
+  <text x="80" y="225" class="small">C, C</text>
+  <text x="80" y="255" class="small">D, D</text>
+  <line x1="325" y1="180" x2="405" y2="180" stroke="#111827" stroke-width="3" marker-end="url(#arrow)"/>
+  <rect x="430" y="90" width="260" height="180" fill="#dcfce7" class="box"/>
+  <text x="560" y="125" text-anchor="middle" class="label">頻度表</text>
+  <text x="470" y="165" class="small">A : 8</text>
+  <text x="470" y="195" class="small">B : 4</text>
+  <text x="470" y="225" class="small">C : 2</text>
+  <text x="470" y="255" class="small">D : 2</text>
+  <line x1="715" y1="180" x2="795" y2="180" stroke="#111827" stroke-width="3" marker-end="url(#arrow)"/>
+  <rect x="820" y="90" width="240" height="180" fill="#fef3c7" class="box"/>
+  <text x="940" y="125" text-anchor="middle" class="label">符号の例</text>
+  <text x="860" y="165" class="small">A → 1</text>
+  <text x="860" y="195" class="small">B → 01</text>
+  <text x="860" y="225" class="small">C → 000</text>
+  <text x="860" y="255" class="small">D → 001</text>
+  <text x="40" y="305" class="small">出現回数の多い A には短い符号、少ない C と D には長い符号が割り当てられる。</text>
+</svg>

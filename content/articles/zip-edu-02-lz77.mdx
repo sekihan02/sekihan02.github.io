@@ -1,0 +1,278 @@
+---
+title: "第2回: ZIP実装を読みながらLZ77の仕組みを理解する"
+slug: "zip-edu-02-lz77"
+publishedAt: 2026-03-14
+updatedAt: 2026-03-14
+summary: "zip-edu の `lz77.py` を読みながら、Deflate の前半を担う LZ77 のトークン化と最長一致探索を理解します。"
+category: "ZIP"
+tags:
+  - "ZIP"
+  - "Deflate"
+  - "LZ77"
+  - "圧縮"
+draft: false
+---
+# 第2回: ZIP実装を読みながらLZ77の仕組みを理解する
+
+[zip-edu](https://github.com/sekihan02/zip-edu/tree/master) の `lz77.py` を読みながら、Deflate の最初の段階である LZ77 が何をしているのかを整理します。
+
+## まず連載全体の地図
+
+この連載は、ZIP を次の順で追っていきます。
+
+1. 第1回: ZIP 全体の役割と流れをつかむ
+2. 第2回: LZ77 で繰り返しをトークンに変える（今回）
+3. 第3回: ハフマン符号でトークンを短いビット列にする
+4. 第4回: Deflate をブロックとビット列として組み立てる
+5. 第5回: できたデータを ZIP コンテナに入れる
+6. 第6回: ここまでの仕組みがリポジトリのどこにあるか整理する
+7. 第7回: 基本実装の外側にある拡張仕様を見る
+
+この第2回は、その中の「圧縮データを作る最初の段階」に当たります。  
+ZIP 全体で見ると、各ファイルのデータをいきなりビット列にするのではなく、まず LZ77 で「そのまま出す部分」と「過去を参照する部分」に分けるところを扱います。
+
+## この回で答える問い
+
+- LZ77 は何をしている処理なのか
+- なぜ文字そのものではなく「距離と長さ」に変えるのか
+- LZ77 全体では、どんな流れで入力をトークン列に変えるのか
+
+## 先に答えると
+
+- LZ77 は、入力を literal と match のトークン列に変える処理です。
+- 繰り返しが見つかった部分は「何文字前から何文字使うか」に置き換えます。
+- 左から1文字ずつ進み、その時点より前を見て一致を探し、literal か match を出し分けます。
+
+## LZ77 全体の流れ
+
+LZ77 がやっていることは、次の5段階です。
+
+1. 入力を先頭から読む
+2. 今いる位置より前に、同じ並びがないか探す
+3. 十分長い一致があれば `match(length, distance)` を出す
+4. 一致がなければ、その1文字を `literal` として出す
+5. これを最後まで繰り返す
+
+この段階では、まだ Deflate のビット列にはしません。
+LZ77 の役割は、元の文字列を「そのまま出す部分」と「前を参照する部分」に分けるところまでです。
+
+## まずはイメージから
+
+`abababababab` を毎回そのまま書くのは大変です。
+
+そこで、こう考えます。
+
+- 最初の `ab` は普通に書く
+- 残りは「2文字前から、10文字ぶんもう一回使って」と書く
+
+これが LZ77 の感覚です。
+
+![LZ77 window](/images/articles/zip-edu-02-lz77/02_lz77_window.svg)
+![LZ77 example](/images/articles/zip-edu-02-lz77/02_lz77_example.svg)
+
+LZ77 は「同じものを消す」のではありません。  
+「前にもう書いた場所を後ろから参照する」だけです。
+
+上の具体例では、
+
+- 最初の `a` と `b` はそのまま出す
+- 残りの `ababababab` は「2文字前を10文字ぶん使う」で表す
+
+という形になります。
+
+## 少し具体化すると
+
+LZ77 の出力は大きく2種類です。
+
+1. そのままの1文字
+   - `Literal`
+2. 前に出た並びへの参照
+   - `Match(length, distance)`
+
+このリポジトリの [lz77.py](https://github.com/sekihan02/zip-edu/blob/master/src/zip_edu/lz77.py) には、その2つのデータ型があります。
+
+- `LiteralToken`
+- `MatchToken`
+
+だから LZ77 は「文字列をいきなり圧縮済みのバイト列にする処理」ではなく、  
+まずは「トークン列に変換する処理」だと考えると理解しやすいです。
+
+この2つを見ると、LZ77 の出力が
+
+- 生の1バイト
+- 過去参照
+
+のどちらかだと分かります。
+
+## 仕様ではどうなっているか
+
+RFC 1951 では、Deflate は
+
+- literal bytes
+- `<length, backward distance>` pairs
+
+を使うと書かれています。[^rfc1951-lz77]
+
+さらに、Deflate は距離を 32KiB まで、長さを 258 まで扱います。[^rfc1951-limits]
+
+この実装の [lz77.py](https://github.com/sekihan02/zip-edu/blob/master/src/zip_edu/lz77.py) には、
+
+- `WINDOW_SIZE = 32768`
+- `MIN_MATCH = 3`
+- `MAX_MATCH = 258`
+
+が定義されています。
+
+## どのように一致を探すのか
+
+`_find_longest_match(data, pos)` の流れは単純です。
+
+1. 今いる位置 `pos` を決める
+2. 直前 32KiB の範囲を後ろから前へなめる
+3. 1文字ずつ比較して最長一致を探す
+4. 3文字以上一致したら `MatchToken`
+5. そうでなければ `LiteralToken`
+
+この実装は、高速化よりも処理の流れが見えることを優先しています。  
+本格的な実装ではハッシュやチェーンで候補を絞りますが、このコードはあえて総当たりに近い形を選んでいます。
+
+## この実装が遅くなりやすい理由
+
+この実装は、今いる位置ごとに過去の候補を順に試し、さらに何文字一致するかをその場で比べます。
+
+そのため
+
+- 窓が広いほど候補が増える
+- 長い一致があるほど比較回数も増える
+
+という性質があります。
+
+つまり、高速化よりも「何を比べているかが見えること」を優先した実装です。
+
+## なぜ最小一致長が 3 なのか
+
+ここもポイントです。
+
+距離と長さを書くにもコストがかかります。  
+もし 1文字や 2文字の一致まで全部 `Match` にすると、かえって大きくなることがあります。
+
+そこで Deflate では長さ符号の下限が 3 です。[^rfc1951-length]
+
+この実装でも `MIN_MATCH = 3` に固定されています。
+
+## 長さと距離は最終的にどうなるか
+
+LZ77 の `length` と `distance` は、それで終わりではありません。  
+Deflate ではこれをさらに「シンボル + 追加ビット」に変換します。
+
+この実装では次の関数が担当しています。
+
+- `length_to_symbol`
+- `distance_to_symbol`
+
+たとえば距離 `7` は、距離シンボルと追加ビットに分解されます。  
+長さも同じです。
+
+LZ77 は参照に置き換えるところまでを担当し、その先のビット列は Deflate が受け持ちます。
+
+## なぜ参照に置き換えるのか
+
+ある繰り返しを見つけたとき、
+
+- 同じ文字をそのまま何度も書く
+- 「何文字前から何文字使うか」と1回だけ書く
+
+のどちらが短くなるかを考えると、後者の方が有利なことが多いです。
+
+だから LZ77 は、繰り返しを見つけたら参照に置き換えます。
+その参照を、次の Deflate がビット列に変えます。
+
+## ここからコードと出力で確認する
+
+実際の定義はこうです。
+
+```python
+@dataclass(slots=True)
+class LiteralToken:
+    value: int
+
+
+@dataclass(slots=True)
+class MatchToken:
+    length: int
+    distance: int
+```
+
+## 実際にこのコードで出るトークン
+
+`abracadabra` を `explain-deflate` で見ると、LZ77 プレビューはこうなります。
+
+```text
+0000: LIT 0x61 ('a')
+0001: LIT 0x62 ('b')
+0002: LIT 0x72 ('r')
+0003: LIT 0x61 ('a')
+0004: LIT 0x63 ('c')
+0005: LIT 0x61 ('a')
+0006: LIT 0x64 ('d')
+0007: MAT len=4 dist=7
+```
+
+最後の `abra` は、先頭の `abra` を参照しています。
+
+出力の見え方は次のとおりです。
+
+- 先頭はそのまま
+- 繰り返しが見つかったら `MAT len=4 dist=7`
+
+になります。
+
+図と出力を合わせて見ると、LZ77 がやっていることはかなり単純です。
+
+- まず「今の位置より前」を見る
+- 同じ並びが見つかったら距離と長さに変える
+- 見つからなければ literal を出す
+
+探索の中心はこの部分です。
+
+```python
+def _find_longest_match(data: bytes, pos: int) -> tuple[int, int]:
+    start = max(0, pos - WINDOW_SIZE)
+    best_length = 0
+    best_distance = 0
+    end_limit = min(len(data), pos + MAX_MATCH)
+    for candidate in range(pos - 1, start - 1, -1):
+        length = 0
+        while pos + length < end_limit and data[candidate + length] == data[pos + length]:
+            length += 1
+            if length == MAX_MATCH:
+                break
+        if length > best_length and length >= MIN_MATCH:
+            best_length = length
+            best_distance = pos - candidate
+```
+
+やっていることは、説明した流れそのままです。
+
+- `start = max(0, pos - WINDOW_SIZE)`
+  - 窓の左端を決める
+- `for candidate in range(pos - 1, start - 1, -1)`
+  - 過去を後ろから前へ探す
+- `while ...`
+  - 何文字一致するか数える
+- `best_length`, `best_distance`
+  - 一番良い一致だけ残す
+
+## 最後にもう一度答えると
+
+- LZ77 の仕事は、入力をトークン列に変えるところまでです。
+- 同じ並びは `length` と `distance` を持つ参照に置き換えます。
+- この段階ではまだビット列にせず、次のハフマン符号化へ渡します。
+
+次回は、そのトークン列を「短いビット列」に変えるハフマン符号に進みます。
+
+## 参考
+
+[^rfc1951-lz77]: L. Peter Deutsch, "DEFLATE Compressed Data Format Specification version 1.3", RFC 1951, sections 1.1 and 3.2.5. https://www.rfc-editor.org/rfc/rfc1951
+[^rfc1951-limits]: RFC 1951, section 1.1. https://www.rfc-editor.org/rfc/rfc1951
+[^rfc1951-length]: RFC 1951, section 3.2.5. https://www.rfc-editor.org/rfc/rfc1951

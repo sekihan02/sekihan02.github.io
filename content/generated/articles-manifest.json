@@ -1,0 +1,161 @@
+{
+  "generatedAt": "2026-03-28T08:22:24.670Z",
+  "site": {
+    "title": "道草ログ",
+    "description": "記事を読みながら、その内容をチャットで確かめられる技術サイト。"
+  },
+  "articles": [
+    {
+      "title": "第7回: ZIP実装の外にある拡張仕様を整理する",
+      "slug": "zip-edu-07-advanced-topics",
+      "summary": "zip-edu では扱っていない ZIP64 や暗号化なども含め、基本実装の外側にある ZIP の拡張と次の学習ポイントを整理します。",
+      "category": "ZIP",
+      "tags": [
+        "ZIP",
+        "ZIP64",
+        "Deflate",
+        "仕様"
+      ],
+      "publishedAt": "2026-03-20",
+      "updatedAt": "2026-03-20",
+      "draft": false,
+      "url": "/articles/zip-edu-07-advanced-topics/",
+      "readingTimeMinutes": 10
+    },
+    {
+      "title": "第6回: zip-eduをどう読むとZIPの仕組みが分かるか",
+      "slug": "zip-edu-06-repo-walkthrough",
+      "summary": "ZIP の基本動作を実装した zip-edu を、どの順番で読むと仕組みが分かりやすいか整理します。",
+      "category": "ZIP",
+      "tags": [
+        "ZIP",
+        "Deflate",
+        "実装読解",
+        "Python"
+      ],
+      "publishedAt": "2026-03-18",
+      "updatedAt": "2026-03-18",
+      "draft": false,
+      "url": "/articles/zip-edu-06-repo-walkthrough/",
+      "readingTimeMinutes": 6
+    },
+    {
+      "title": "第5回: ZIP実装を読みながらZIPファイルの中身を理解する",
+      "slug": "zip-edu-05-zip-container",
+      "summary": "zip-edu の `zip_format.py` を読みながら、Local File Header から EOCD まで ZIP ファイルの中身を具体的に追います。",
+      "category": "ZIP",
+      "tags": [
+        "ZIP",
+        "CRC32",
+        "アーカイブ",
+        "バイナリ"
+      ],
+      "publishedAt": "2026-03-17",
+      "updatedAt": "2026-03-17",
+      "draft": false,
+      "url": "/articles/zip-edu-05-zip-container/",
+      "readingTimeMinutes": 12
+    },
+    {
+      "title": "第4回: ZIP実装を読みながらDeflateのブロックとビット列を理解する",
+      "slug": "zip-edu-04-bitstream-and-blocks",
+      "summary": "zip-edu の `bitstream.py` と `deflate.py` を読みながら、Deflate のブロック構造と LSB-first のビット列を理解します。",
+      "category": "ZIP",
+      "tags": [
+        "ZIP",
+        "Deflate",
+        "ビット列",
+        "圧縮"
+      ],
+      "publishedAt": "2026-03-16",
+      "updatedAt": "2026-03-16",
+      "draft": false,
+      "url": "/articles/zip-edu-04-bitstream-and-blocks/",
+      "readingTimeMinutes": 9
+    },
+    {
+      "title": "第3回: ZIP実装を読みながらハフマン符号とDeflateを理解する",
+      "slug": "zip-edu-03-huffman-and-deflate",
+      "summary": "zip-edu の `huffman.py` と `deflate.py` を読みながら、ハフマン符号と Deflate の符号化処理を整理します。",
+      "category": "ZIP",
+      "tags": [
+        "ZIP",
+        "Deflate",
+        "Huffman",
+        "圧縮"
+      ],
+      "publishedAt": "2026-03-15",
+      "updatedAt": "2026-03-15",
+      "draft": false,
+      "url": "/articles/zip-edu-03-huffman-and-deflate/",
+      "readingTimeMinutes": 9
+    },
+    {
+      "title": "第2回: ZIP実装を読みながらLZ77の仕組みを理解する",
+      "slug": "zip-edu-02-lz77",
+      "summary": "zip-edu の `lz77.py` を読みながら、Deflate の前半を担う LZ77 のトークン化と最長一致探索を理解します。",
+      "category": "ZIP",
+      "tags": [
+        "ZIP",
+        "Deflate",
+        "LZ77",
+        "圧縮"
+      ],
+      "publishedAt": "2026-03-14",
+      "updatedAt": "2026-03-14",
+      "draft": false,
+      "url": "/articles/zip-edu-02-lz77/",
+      "readingTimeMinutes": 10
+    },
+    {
+      "title": "第1回: ZIP実装を読む前に、ZIPが何をしている形式か整理する",
+      "slug": "zip-edu-01-overview",
+      "summary": "zip-edu を読む前提として、ZIP が圧縮方式ではなく複数ファイルをまとめる形式だと整理します。",
+      "category": "ZIP",
+      "tags": [
+        "ZIP",
+        "Deflate",
+        "アーカイブ",
+        "Central Directory"
+      ],
+      "publishedAt": "2026-03-12",
+      "updatedAt": "2026-03-14",
+      "draft": false,
+      "url": "/articles/zip-edu-01-overview/",
+      "readingTimeMinutes": 12
+    },
+    {
+      "title": "NDLOCR-LiteのOCR処理を分解してみる",
+      "slug": "ndlocr-lite-ocr-pipeline",
+      "summary": "NDLOCR-Lite の OCR がどの順で処理されるかを、責務ごとに整理してみました。",
+      "category": "OCR",
+      "tags": [
+        "OCR",
+        "NDLOCR-Lite",
+        "ONNX",
+        "読み順推定"
+      ],
+      "publishedAt": "2026-03-06",
+      "updatedAt": "2026-03-07",
+      "draft": false,
+      "url": "/articles/ndlocr-lite-ocr-pipeline/",
+      "readingTimeMinutes": 3
+    },
+    {
+      "title": "道草ログについて",
+      "slug": "michikusa-log-intro",
+      "summary": "このサイトの使い方を短くまとめています。",
+      "category": "道草ログ",
+      "tags": [
+        "道草ログ",
+        "使い方",
+        "チャット"
+      ],
+      "publishedAt": "2026-03-03",
+      "updatedAt": "2026-03-03",
+      "draft": false,
+      "url": "/articles/michikusa-log-intro/",
+      "readingTimeMinutes": 1
+    }
+  ]
+}

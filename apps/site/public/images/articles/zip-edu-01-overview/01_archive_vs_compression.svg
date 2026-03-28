@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1150" height="340" viewBox="0 0 1150 340">
+  <style>
+    .title { font: 700 28px "Noto Sans JP", sans-serif; fill: #111827; }
+    .label { font: 700 18px "Noto Sans JP", sans-serif; fill: #111827; }
+    .small { font: 14px "Noto Sans JP", sans-serif; fill: #374151; }
+    .box { stroke: #1f2937; stroke-width: 2; rx: 12; ry: 12; }
+  </style>
+  <text x="40" y="42" class="title">「アーカイブ」と「圧縮」は別の仕事</text>
+  <rect x="40" y="90" width="500" height="190" fill="#e0f2fe" class="box"/>
+  <rect x="610" y="90" width="500" height="190" fill="#dcfce7" class="box"/>
+  <text x="290" y="125" text-anchor="middle" class="label">アーカイブ</text>
+  <text x="860" y="125" text-anchor="middle" class="label">圧縮</text>
+  <text x="80" y="165" class="small">役割: 複数ファイルを 1 つの入れ物にまとめる</text>
+  <text x="80" y="195" class="small">入力: a.txt / b.txt / deep/c.txt / ...</text>
+  <text x="80" y="225" class="small">出力: 1 つの ZIP ファイル</text>
+  <text x="80" y="255" class="small">注目点: 名前 / 位置 / 目次 / ヘッダ</text>
+  <text x="650" y="165" class="small">役割: データを小さくする</text>
+  <text x="650" y="195" class="small">入力: 1 本のバイト列</text>
+  <text x="650" y="225" class="small">出力: より短いバイト列</text>
+  <text x="650" y="255" class="small">注目点: 繰り返し / 頻度 / ビット列</text>
+  <text x="40" y="315" class="small">ZIP はこの 2 つを両方使うことが多いので混ざって見えるが、本当は別の層にある。</text>
+</svg>

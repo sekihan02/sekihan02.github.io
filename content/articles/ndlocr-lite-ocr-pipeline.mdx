@@ -1,0 +1,119 @@
+---
+title: NDLOCR-LiteのOCR処理を分解してみる
+slug: ndlocr-lite-ocr-pipeline
+publishedAt: 2026-03-06
+updatedAt: 2026-03-07
+summary: NDLOCR-Lite の OCR がどの順で処理されるかを、責務ごとに整理してみました。
+category: OCR
+tags:
+  - OCR
+  - NDLOCR-Lite
+  - ONNX
+  - 読み順推定
+draft: false
+---
+
+# NDLOCR-LiteのOCR処理を分解してみる
+
+CPUで動作する OCR ツール NDLOCR-Lite がどのように動作するのかが気になったのでコードを見てみました
+- [NDLOCR-Liteの公開について](https://lab.ndl.go.jp/news/2025/2026-02-24/)
+- [ndlocr-lite](https://github.com/ndl-lab/ndlocr-lite)
+
+NDLOCR-Lite は、ページ画像をいきなり全文認識するのではなく、
+「検出」と「認識」を分けた段階処理で OCR を実行します。
+
+## 全体像
+
+処理の主な流れは次です。
+
+1. 文字行を検出する
+2. 読み順を決める
+3. 行ごとに文字認識する
+4. XML / JSON / TXT へ出力する
+
+## モデルを分ける
+
+OCR のこちら 2 つの処理について NDLOCR-Lite は分離して処理していました。
+
+- 検出: 画像のどこに文字行があるか
+- 認識: 切り出した行に何が書かれているか
+
+モデルはこのようになっていました。
+
+- 検出モデル: DEIM 系 ONNX（`src/deim.py`）
+- 認識モデル: PARSeq 系 ONNX（`src/parseq.py`）
+
+## 実行フロー（実装応）
+
+## Step A: 入力処理
+
+- 入口: `process(args)`（`src/ocr.py`）
+- 入力: `--sourceimg` または `--sourcedir`
+- 画像拡張子をフィルタして対象だけ処理
+
+## Step B: レイアウト/行検出（DEIM）
+
+- クラス: `DEIM`（`src/deim.py`）
+- `detect()` で ONNX Runtime 推論
+- 1検出ごとに `class id / confidence / bbox / pred_char_count(任意)` を取得
+
+検出クラスは `src/config/ndl.yaml` に定義されます。
+
+## Step C: 構造化XMLへ変換
+
+- 関数: `convert_to_xml_string3()`（`src/ndl_parser.py`）
+- 行要素を `TEXTBLOCK / LINE / BLOCK` に再配置
+- `CONF` や `PRED_CHAR_CNT` も属性として付与
+
+## Step D: 読み順推定
+
+- 関数: `eval_xml()`（`src/reading_order/xy_cut/eval.py`）
+- 行 bbox から XY-cut で順序推定
+- `ORDER` 属性を付与し、必要に応じて再ソート
+
+## Step E: 文字認識（PARSeq）
+
+- クラス: `PARSEQ`（`src/parseq.py`）
+- `read()` で行画像を前処理して ONNX 推論
+- 出力トークン列を EOS まで復号して文字列化
+
+## Step F: 3モデルのカスケード認識
+
+`process_cascade()`（`src/ocr.py`）は行長に応じて認識モデルを使い分けます。
+
+- 短行向けモデル
+- 中行向けモデル
+- 長行向けモデル
+
+さらに結果長を見て再投入します。
+
+- 短行モデル結果が長すぎる -> 中行モデルへ
+- 中行モデル結果が長すぎる -> 長行モデルへ
+
+この設計で、速度と精度のバランスを取っていました。
+
+```text
+LINE image
+  -> pred_char_cnt でモデル選択
+     -> PARSeq-30
+     -> PARSeq-50
+     -> PARSeq-100
+  -> 結果文字数が閾値超過なら上位モデルへ再投入
+```
+
+## 出力形式
+
+ページごとに次を保存していました。
+
+- `.xml`: 構造化 OCR 結果（`LINE` に認識文字列）
+- `.json`: bbox / text / confidence
+- `.txt`: 読み順に並べたテキスト
+
+## 技術スタックと役割
+
+| 技術 | 役割 |
+|---|---|
+| ONNX Runtime | 検出/認識モデルの推論実行 |
+| OpenCV + NumPy | 前処理、行画像切り出し、配列演算 |
+| YAML | クラス定義、文字セット設定 |
+| XML処理 | OCR結果の構造化と順序メタデータ管理 |

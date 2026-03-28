@@ -1,0 +1,281 @@
+---
+title: "第5回: ZIP実装を読みながらZIPファイルの中身を理解する"
+slug: "zip-edu-05-zip-container"
+publishedAt: 2026-03-17
+updatedAt: 2026-03-17
+summary: "zip-edu の `zip_format.py` を読みながら、Local File Header から EOCD まで ZIP ファイルの中身を具体的に追います。"
+category: "ZIP"
+tags:
+  - "ZIP"
+  - "CRC32"
+  - "アーカイブ"
+  - "バイナリ"
+draft: false
+---
+# 第5回: ZIP実装を読みながらZIPファイルの中身を理解する
+
+[zip-edu](https://github.com/sekihan02/zip-edu/tree/master) の `zip_format.py` と実際の `sample.zip` を見比べながら、ZIP ファイルの中に何がどの順で入っているのかを確認します。
+
+## まず連載全体の地図
+
+この連載は、ZIP を次の順で追っていきます。
+
+1. 第1回: ZIP 全体の役割と流れをつかむ
+2. 第2回: LZ77 で繰り返しをトークンに変える
+3. 第3回: ハフマン符号でトークンを短いビット列にする
+4. 第4回: Deflate をブロックとビット列として組み立てる
+5. 第5回: できたデータを ZIP コンテナに入れる（今回）
+6. 第6回: ここまでの仕組みがリポジトリのどこにあるか整理する
+7. 第7回: 基本実装の外側にある拡張仕様を見る
+
+この第5回は、圧縮データの外側を包む ZIP コンテナを見る回です。  
+ここまでの回で見てきた Deflate データが、Local File Header や Central Directory や EOCD と一緒にどう並んで、1つの ZIP ファイルになっているのかを扱います。
+
+## この回で答える問い
+
+- Local File Header, Data Descriptor, Central Directory, EOCD を見分ける
+- little-endian とオフセットの意味を理解する
+- CRC32 がなぜ必要かを知る
+- ZIP 全体では、これらのレコードがどんな順で並ぶのか
+
+## 先に答えると
+
+- ZIP の前半には各ファイルのローカル情報とデータ本体が並びます。
+- 後半には中央ディレクトリと EOCD があり、一覧や位置の確認は主にこちらを使います。
+- CRC32 は圧縮率のためではなく、展開した結果が正しいか確認するためにあります。
+- つまり ZIP は、前半に各ファイルの実体、後半に全体の目次を持つ形式です。
+
+## ZIP コンテナ全体の流れ
+
+ZIP 全体で並んでいるものは、次の5段階で考えると分かりやすいです。
+
+1. 各ファイルごとに Local File Header を書く
+2. その直後に圧縮データや生データを書く
+3. 必要なら Data Descriptor を後ろに付ける
+4. すべてのファイルが終わったあと、Central Directory をまとめて書く
+5. 最後に EOCD を置いて、目次の開始位置と件数を示す
+
+読む側はこの逆で、まず最後の EOCD から中央ディレクトリへたどり、そこから各ファイルの本体へ移動します。
+
+## まずは全体図
+
+![ZIP container](/images/articles/zip-edu-05-zip-container/05_zip_container.svg)
+![Sample ZIP offsets](/images/articles/zip-edu-05-zip-container/05_sample_zip_offsets.svg)
+
+このリポジトリのサンプル ZIP は、2つのファイルを次の順で並べています。
+
+1. `input/a.txt` の Local File Header
+2. `input/a.txt` の Deflate data
+3. `input/a.txt` の Data Descriptor
+4. `input/deep/b.txt` の Local File Header
+5. `input/deep/b.txt` の Deflate data
+6. `input/deep/b.txt` の Data Descriptor
+7. Central Directory
+8. EOCD
+
+APPNOTE でも、ZIP の全体構造はこの考え方で説明されています。[^appnote-container]
+
+2枚目の図は、このリポジトリで実際に作った `sample.zip` のオフセットをそのまま描いたものです。
+
+- `0` バイト目から最初のローカルヘッダ
+- `143` バイト目から中央ディレクトリ
+- `262` バイト目から EOCD
+
+記事に出てくる数字を、図でも追えるようにしています。
+
+## little-endian はどう効いているか
+
+ZIP は little-endian です。[^appnote-endian]
+
+このリポジトリは `struct.pack("<...")` と `struct.unpack_from("<...")` を使っていて、  
+`<` が little-endian を意味します。
+
+## Data Descriptor の意味
+
+今回のサンプル ZIP は `--data-descriptor` を付けて作っています。  
+そのため、Local File Header の CRC とサイズは最初は 0 で書かれ、後ろに Data Descriptor が付きます。
+
+APPNOTE の general purpose bit flag では、bit 3 が立っているとき、
+
+- local header の CRC-32
+- compressed size
+- uncompressed size
+
+は 0 で埋められ、データの後ろにある descriptor に実際の値を書くと説明されています。[^appnote-bit3]
+
+この実装でも、`build_zip(..., use_data_descriptor=True)` では
+
+- ヘッダ側はゼロ
+- データの後ろに `DATA_DESCRIPTOR_SIG` と実値
+
+を書きます。
+
+つまり「先に分からない値はゼロで埋め、あとから後置きで書く」という仕組みです。
+
+## CRC32 は何のためにあるか
+
+圧縮や展開が終わったあと、「本当に元データと同じか」を検証するために CRC32 を使います。
+
+この実装では [crc32.py](https://github.com/sekihan02/zip-edu/blob/master/src/zip_edu/crc32.py) が CRC32 を計算し、  
+[zip_format.py](https://github.com/sekihan02/zip-edu/blob/master/src/zip_edu/zip_format.py) の `extract_all` が
+
+- 展開後サイズ
+- CRC32
+
+をチェックしています。
+
+CRC は検査値です。
+元データや展開結果が壊れていないかを確かめるために使います。
+
+つまり CRC32 で見ているのは、「どれだけ縮んだか」ではなく「展開後の内容が正しいか」です。
+
+## Central Directory が持つもの
+
+中央ディレクトリには、各ファイルについて少なくとも次のような情報があります。
+
+- ファイル名
+- 圧縮方式
+- CRC32
+- 圧縮サイズ
+- 非圧縮サイズ
+- ローカルヘッダの位置
+
+このリポジトリの `ZipEntryInfo` は、その情報をそのまま表すデータ構造です。
+
+この設計があるので、
+
+- `inspect`
+- `unpack`
+- `explain-zip`
+
+は、どれも中央ディレクトリを起点に動きます。
+
+## EOCD は「ZIP の最後のしおり」
+
+EOCD の役割は、「中央ディレクトリはどこから始まるか」「何件あるか」を教えることです。[^appnote-eocd]
+
+この実装は `find_eocd_offset` でファイル末尾からさかのぼって EOCD を探します。  
+だからまず EOCD を見つけ、それから中央ディレクトリへ行く流れになります。
+
+この流れは、仕様の構造とそのまま対応しています。
+
+## ここから出力とコードで確認する
+
+サンプル ZIP の説明出力をもう一度見ます。
+
+```text
+zip_bytes=284
+eocd_offset=262
+central_directory_offset=143
+central_directory_size=119
+entry_count=2
+comment_length=0
+input/a.txt: local_header=0 data=41 method=deflate compressed=10 uncompressed=18 flags=bit3-data-descriptor,utf8-name
+input/deep/b.txt: local_header=67 data=113 method=deflate compressed=14 uncompressed=18 flags=bit3-data-descriptor,utf8-name
+```
+
+ここから読めること:
+
+- ZIP 全体は 284 バイト
+- 143 バイト目から中央ディレクトリ
+- 262 バイト目から EOCD
+- `input/a.txt` の Local Header は 0 バイト目
+- `input/a.txt` の圧縮データは 41 バイト目から
+- `input/deep/b.txt` の Local Header は 67 バイト目
+
+ZIP は「何がどこにあるか」を数値でたどる形式だと分かります。
+
+ファイル先頭 160 バイトのダンプです。
+
+```text
+00000000: 50 4b 03 04 14 00 08 08 08 00 14 b8 6a 5c 00 00
+00000010: 00 00 00 00 00 00 00 00 00 00 0b 00 00 00 69 6e
+00000020: 70 75 74 2f 61 2e 74 78 74 4b cc 29 c8 48 54 40
+00000030: 22 b9 00 50 4b 07 08 3e 45 97 7c 0a 00 00 00 12
+00000040: 00 00 00 50 4b 03 04 14 00 08 08 08 00 14 b8 6a
+00000050: 5c 00 00 00 00 00 00 00 00 00 00 00 00 10 00 00
+00000060: 00 69 6e 70 75 74 2f 64 65 65 70 2f 62 2e 74 78
+00000070: 74 cb c9 cc 4b 35 e4 02 91 46 60 d2 98 0b 00 50
+00000080: 4b 07 08 fe 43 4a 3c 0e 00 00 00 12 00 00 00 50
+00000090: 4b 01 02 ...
+```
+
+ここで見分けるべきシグネチャは次です。
+
+- `50 4b 03 04`
+  - Local File Header
+- `50 4b 07 08`
+  - Data Descriptor
+- `50 4b 01 02`
+  - Central Directory Header
+- `50 4b 05 06`
+  - EOCD
+
+このリポジトリの [zip_format.py](https://github.com/sekihan02/zip-edu/blob/master/src/zip_edu/zip_format.py) でも、同じ値をシグネチャとして定義しています。
+
+例えば EOCD の最後の部分は:
+
+```text
+50 4b 05 06 00 00 00 00 02 00 02 00 77 00 00 00 8f 00 00 00 00 00
+```
+
+ここで
+
+- `77 00 00 00` は `0x00000077 = 119`
+- `8f 00 00 00` は `0x0000008f = 143`
+
+です。
+
+つまり中央ディレクトリのサイズは 119、開始オフセットは 143 です。
+
+Data Descriptor を付ける処理はこうです。
+
+```python
+local_crc = 0 if use_data_descriptor else crc
+local_comp_size = 0 if use_data_descriptor else len(comp_data)
+local_uncomp_size = 0 if use_data_descriptor else len(raw_data)
+...
+if use_data_descriptor:
+    zip_data.extend(
+        struct.pack(
+            "<IIII",
+            DATA_DESCRIPTOR_SIG,
+            crc,
+            len(comp_data),
+            len(raw_data),
+        )
+    )
+```
+
+EOCD から中央ディレクトリを読む入口はこうです。
+
+```python
+def parse_central_directory(data: bytes) -> list[ZipEntryInfo]:
+    eocd_offset = find_eocd_offset(data)
+    (
+        _sig,
+        _disk_no,
+        _cd_disk_no,
+        _entries_on_disk,
+        entry_count,
+        cd_size,
+        cd_offset,
+        comment_len,
+    ) = struct.unpack_from("<IHHHHIIH", data, eocd_offset)
+```
+
+## 最後にもう一度答えると
+
+- ZIP は little-endian のバイト列でできている
+- Local Header と Data Descriptor が前半に並ぶ
+- Central Directory と EOCD が後半に並ぶ
+- CRC32 は整合性確認のために使う
+
+次回は、ここまでの話をこのリポジトリのコード構成に重ねます。
+
+## 参考
+
+[^appnote-container]: PKWARE, "APPNOTE.TXT", sections 4.3.6, 4.3.12, 4.3.16. https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT
+[^appnote-endian]: PKWARE, "APPNOTE.TXT", section 4.4.1.1. https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT
+[^appnote-bit3]: PKWARE, "APPNOTE.TXT", section 4.4.4. https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT
+[^appnote-eocd]: PKWARE, "APPNOTE.TXT", section 4.3.16. https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT

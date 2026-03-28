@@ -1,0 +1,17 @@
+{
+  "rewrites": [
+    {
+      "source": "/healthz",
+      "destination": "/api/healthz.py"
+    },
+    {
+      "source": "/v1/chat",
+      "destination": "/api/v1/chat.py"
+    },
+    {
+      "source": "/v1/search",
+      "destination": "/api/v1/search.py"
+    }
+  ]
+}
+

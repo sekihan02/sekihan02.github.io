@@ -1,0 +1,224 @@
+---
+title: "第4回: ZIP実装を読みながらDeflateのブロックとビット列を理解する"
+slug: "zip-edu-04-bitstream-and-blocks"
+publishedAt: 2026-03-16
+updatedAt: 2026-03-16
+summary: "zip-edu の `bitstream.py` と `deflate.py` を読みながら、Deflate のブロック構造と LSB-first のビット列を理解します。"
+category: "ZIP"
+tags:
+  - "ZIP"
+  - "Deflate"
+  - "ビット列"
+  - "圧縮"
+draft: false
+---
+# 第4回: ZIP実装を読みながらDeflateのブロックとビット列を理解する
+
+[zip-edu](https://github.com/sekihan02/zip-edu/tree/master) の `bitstream.py` と `deflate.py` を中心に、Deflate が実際にはどんなブロック列とビット列でできているのかを見ます。
+
+## まず連載全体の地図
+
+この連載は、ZIP を次の順で追っていきます。
+
+1. 第1回: ZIP 全体の役割と流れをつかむ
+2. 第2回: LZ77 で繰り返しをトークンに変える
+3. 第3回: ハフマン符号でトークンを短いビット列にする
+4. 第4回: Deflate をブロックとビット列として組み立てる（今回）
+5. 第5回: できたデータを ZIP コンテナに入れる
+6. 第6回: ここまでの仕組みがリポジトリのどこにあるか整理する
+7. 第7回: 基本実装の外側にある拡張仕様を見る
+
+この第4回は、圧縮データの「並べ方」を見る回です。  
+前回で見たハフマン符号や LZ77 の結果が、Deflate の中でどんなブロック構造を取り、どんなビット順で書かれるのかを整理します。
+
+## この回で答える問い
+
+- DEFLATE の `stored / fixed / dynamic` ブロックを理解する
+- `BFINAL` と `BTYPE` を読めるようにする
+- DEFLATE 全体では、ブロックとビット列がどんな順で並ぶのか
+
+## 先に答えると
+
+- Deflate は 1 個以上のブロックを並べた形式です。
+- 各ブロックの先頭には `BFINAL` と `BTYPE` があり、方式を決めています。
+- ビットは LSB-first で詰めるので、普通の「左から読む」感覚では追いにくいです。
+
+## DEFLATE 全体の流れ
+
+DEFLATE のビット列は、次の順で作られます。
+
+1. データを1個以上のブロックとして扱う
+2. 各ブロックの先頭に `BFINAL` と `BTYPE` を書く
+3. `stored / fixed / dynamic` のどれかに応じて中身を書く
+4. そのときのビットは LSB-first で詰める
+5. 読み手は同じ規則で逆向きに読み戻す
+
+つまりこの回の中心は、「圧縮の考え方」よりも「Deflate のビット列がどう組み立てられるか」です。
+
+## まず全体像
+
+DEFLATE は、データを1本のブロックで持つことも、複数ブロックに分けることもできます。  
+各ブロックの先頭には3ビットのヘッダがあります。
+
+- `BFINAL`: これが最後のブロックか
+- `BTYPE`: ブロック方式
+
+![DEFLATE blocks](/images/articles/zip-edu-04-bitstream-and-blocks/04_deflate_blocks.svg)
+![LSB bit order](/images/articles/zip-edu-04-bitstream-and-blocks/04_lsb_bit_order.svg)
+
+RFC 1951 では、`BTYPE=00` が stored、`01` が fixed、`10` が dynamic、`11` は不正です。[^rfc1951-btype]
+
+この実装でも [deflate.py](https://github.com/sekihan02/zip-edu/blob/master/src/zip_edu/deflate.py) の `decompress_deflate` が同じ分岐をしています。
+
+## ビットはどちら向きに詰めるのか
+
+Deflate は LSB-first、つまり下位ビット側から読む規格です。  
+ここでつまずく人が多いです。
+
+このリポジトリでは [bitstream.py](https://github.com/sekihan02/zip-edu/blob/master/src/zip_edu/bitstream.py) のコメントに、
+
+- `DEFLATE uses least-significant-bit-first bit ordering`
+
+と明記されています。
+
+`BitWriter.write_bits` は値を `_bit_buf` の下位側へ積み、8ビットたまると1バイト吐き出します。  
+`BitReader.read_bits` は、その逆向きで読み戻します。
+
+図にすると、
+
+- `BFINAL=1`
+- `BTYPE=01`
+
+のような短いヘッダでも、「左から読む」感覚ではなく「下位側から詰める」感覚が必要だと分かります。
+
+ここで見ているのは、圧縮アルゴリズムそのものより「規格どおりにビットを並べる部分」です。
+
+## stored ブロック
+
+`stored` は圧縮しません。  
+でもブロックとして正しい形で包む必要があります。
+
+流れはこうです。
+
+1. `BFINAL`
+2. `BTYPE=00`
+3. バイト境界にそろえる
+4. `LEN`
+5. `NLEN = LEN ^ 0xFFFF`
+6. 生データ
+
+この実装の `compress_deflate_stored` も、その順番で書いています。  
+`_decode_stored_block` も `NLEN` を確認してから生データを読むので、規格どおりの流れがそのまま見えます。
+
+## fixed ブロック
+
+`fixed` は、規格で決まった literal/length の符号長と distance の符号長を使います。[^rfc1951-fixed]
+
+この実装では
+
+- `_FIXED_LITERAL_LENGTHS`
+- `_FIXED_DISTANCE_LENGTHS`
+
+を最初に配列で作っています。
+
+これは仕様書の表をほぼそのままコード化したものです。  
+この配列を見ると、「固定ハフマンは本当に固定なんだ」と実感できます。
+
+## dynamic ブロック
+
+`dynamic` は一番面白い部分です。
+
+1. データから literal/length の頻度を数える
+2. distance の頻度を数える
+3. それぞれの符号長を作る
+4. その符号長の列自体も圧縮して書く
+5. そのあとで本体のシンボル列を書く
+
+つまり dynamic は「木の情報も本体も一緒に送る」方式です。
+
+この実装では、
+
+- `_build_token_frequencies`
+- `_encode_code_length_stream`
+- `_CODE_LENGTH_ORDER`
+
+を追うと、仕様の流れがそのまま見えてきます。
+
+## `auto` はどれを選ぶか
+
+`auto` は
+
+- `stored`
+- `fixed`
+- `dynamic`
+
+を実際に作ってみて、一番短くなったものを選びます。
+
+つまり、理屈で推すのではなく、実際に作って一番短かったものを選ぶ方式です。
+
+## raw DEFLATE と zlib / gzip
+
+ここも大事です。
+
+- DEFLATE
+  - 圧縮アルゴリズムそのもの
+- zlib
+  - DEFLATE の前後にヘッダと Adler-32 を持つ形式[^rfc1950]
+- gzip
+  - DEFLATE の前後に別のヘッダと CRC32 を持つ形式[^rfc1952]
+
+![Wrapper compare](/images/articles/zip-edu-04-bitstream-and-blocks/07_wrapper_compare.svg)
+
+このリポジトリの `compress_deflate()` は raw DEFLATE を返します。  
+その結果を [zip_format.py](https://github.com/sekihan02/zip-edu/blob/master/src/zip_edu/zip_format.py) が ZIP の file data としてそのまま書いています。
+
+仕様の言葉で言えば、「ZIP コンテナの中に raw Deflate stream を入れている」ということです。
+
+## ここからコードで確認する
+
+ビットを積むコアはこうです。
+
+```python
+def write_bits(self, value: int, count: int) -> None:
+    self._bit_buf |= (value & ((1 << count) - 1)) << self._bit_count
+    self._bit_count += count
+    while self._bit_count >= 8:
+        self._out.append(self._bit_buf & 0xFF)
+        self._bit_buf >>= 8
+        self._bit_count -= 8
+```
+
+図と合わせると、
+
+- 新しいビットは `_bit_count` の位置から積まれる
+- 8ビットたまると 1 バイトとして取り出される
+
+という流れが見えます。
+
+`stored` ブロックの書き込みはこうです。
+
+```python
+writer.write_bits(final, 1)
+writer.write_bits(0b00, 2)
+writer.align_byte()
+writer.write_bits(len(chunk), 16)
+writer.write_bits(len(chunk) ^ 0xFFFF, 16)
+writer.write_bytes(chunk)
+```
+
+## 最後にもう一度答えると
+
+- DEFLATE はブロックの列
+- 各ブロックは `BFINAL` と `BTYPE` を持つ
+- `stored / fixed / dynamic` で構造が変わる
+- ビット順序は LSB-first
+- raw DEFLATE と zlib/gzip は別物
+
+次回は、その raw DEFLATE を ZIP という箱の中にどう入れるかを見ます。
+
+## 参考
+
+[^rfc1951-btype]: RFC 1951, section 3.2.3. https://www.rfc-editor.org/rfc/rfc1951
+[^rfc1951-fixed]: RFC 1951, sections 3.2.6 and 3.2.7. https://www.rfc-editor.org/rfc/rfc1951
+[^rfc1950]: L. Peter Deutsch and Jean-loup Gailly, "ZLIB Compressed Data Format Specification version 3.3", RFC 1950. https://www.rfc-editor.org/rfc/rfc1950
+[^rfc1952]: P. Deutsch, "GZIP file format specification version 4.3", RFC 1952. https://www.rfc-editor.org/rfc/rfc1952

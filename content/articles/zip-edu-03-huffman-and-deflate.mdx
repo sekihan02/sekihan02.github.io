@@ -1,0 +1,278 @@
+---
+title: "第3回: ZIP実装を読みながらハフマン符号とDeflateを理解する"
+slug: "zip-edu-03-huffman-and-deflate"
+publishedAt: 2026-03-15
+updatedAt: 2026-03-15
+summary: "zip-edu の `huffman.py` と `deflate.py` を読みながら、ハフマン符号と Deflate の符号化処理を整理します。"
+category: "ZIP"
+tags:
+  - "ZIP"
+  - "Deflate"
+  - "Huffman"
+  - "圧縮"
+draft: false
+---
+# 第3回: ZIP実装を読みながらハフマン符号とDeflateを理解する
+
+[zip-edu](https://github.com/sekihan02/zip-edu/tree/master) の `huffman.py` と `deflate.py` を見ながら、LZ77 で作ったトークン列がどうやって短いビット列に変わるのかを追います。
+
+## まず連載全体の地図
+
+この連載は、ZIP を次の順で追っていきます。
+
+1. 第1回: ZIP 全体の役割と流れをつかむ
+2. 第2回: LZ77 で繰り返しをトークンに変える
+3. 第3回: ハフマン符号でトークンを短いビット列にする（今回）
+4. 第4回: Deflate をブロックとビット列として組み立てる
+5. 第5回: できたデータを ZIP コンテナに入れる
+6. 第6回: ここまでの仕組みがリポジトリのどこにあるか整理する
+7. 第7回: 基本実装の外側にある拡張仕様を見る
+
+この第3回は、LZ77 の次の段階です。  
+前回で作った `literal` と `match` の列を、Deflate の中で実際に短いビット列へ変えていく部分を扱います。ZIP 全体で見ると、「圧縮データの中身をどう小さく書くか」の回です。
+
+## この回で答える問い
+
+- ハフマン符号は何をよくしているのか
+- Deflate では、LZ77 の結果をどんな順でビット列にするのか
+- 固定ハフマンと動的ハフマンは何が違うのか
+
+## 先に答えると
+
+- ハフマン符号は、よく出るものを短く書いて全体のビット数を減らす方法です。
+- Deflate は、LZ77 の結果を literal/length と distance に分けてからハフマン符号化します。
+- fixed は表が固定、dynamic はデータごとに表を作る方式です。
+
+## Deflate 全体の流れ
+
+圧縮ブロックとして見ると、この段階でやっていることは次の5段階です。
+
+1. LZ77 の結果として `literal` と `match` の列を受け取る
+2. `match` を長さシンボルと距離シンボルに分ける
+3. 各シンボルが何回出るか数える
+4. その頻度から短い符号と長い符号を決める
+5. 実際のシンボル列を、その符号でビット列に書く
+
+`stored` ブロックはここを通りませんが、`fixed` と `dynamic` ではこの流れで考えると全体像がつかみやすいです。
+つまり Deflate では、「何を出すか」を LZ77 が決めて、「どう短く書くか」をハフマン符号が決めています。
+
+## まずはイメージから
+
+よく出てくるものに短い記号を当てると、全体を短く書けます。
+
+- よく出るもの: 短い合図
+- あまり出ないもの: 少し長い合図
+
+この「よく出るものほど短くする」のがハフマン符号です。
+
+![Huffman basics](/images/articles/zip-edu-03-huffman-and-deflate/03_huffman_basic.svg)
+![Huffman example](/images/articles/zip-edu-03-huffman-and-deflate/03_huffman_example.svg)
+
+## ただ、短ければ何でもよいわけではない
+
+例えば
+
+- `A -> 0`
+- `B -> 01`
+
+だと、`01` を見たとき
+
+- `0` のあとに `1` が来た
+- それとも最初から `01` だった
+
+が分からなくなります。
+
+そこで必要なのが prefix-free です。
+
+- どの符号語も、別の符号語の先頭になってはいけない
+
+この条件があると、左から読んで一意に復号できます。
+
+## Deflate では何を符号化するのか
+
+Deflate は元の文字列を直接ハフマン化するのではありません。  
+先に LZ77 でトークン列にしてから、そのトークンを符号化します。
+
+つまり順番はこうです。
+
+1. `LiteralToken` と `MatchToken` を作る
+2. `MatchToken` を長さシンボルと距離シンボルに変える
+3. それらのシンボルをハフマン符号で書く
+
+RFC 1951 でも、literal/length 用の符号木と distance 用の符号木を分けることが説明されています。[^rfc1951-trees]
+
+図の見方としては、
+
+- まず出現回数を数える
+- その回数から短い符号と長い符号を割り当てる
+- よく出るものほど全体の平均ビット数を下げる
+
+という順番です。
+
+## なぜ頻度の偏りがあると効くのか
+
+ハフマン符号では、よく出るものに短い符号、あまり出ないものに長い符号を割り当てます。
+
+そのため、
+
+- 出現回数に偏りがあるデータ
+- よく出るシンボルがはっきりしているデータ
+
+では全体のビット数を減らしやすくなります。
+
+逆に、どのシンボルも同じくらい出るなら、そんなに短くできません。
+
+## 正準ハフマンは何をしているのか
+
+ここで重要なのは「正準ハフマン」です。
+
+Deflate は木そのものを送るのではなく、主に「各シンボルの符号長」を送ります。  
+受信側はその符号長から正準ルールで同じ符号を再構成します。
+
+だから Deflate では「木そのもの」ではなく、「符号長から同じ符号を再構成する」という考え方が重要です。
+
+## 固定ハフマンと動的ハフマン
+
+Deflate には3つのブロック方式があります。
+
+1. `stored`
+   - 圧縮しない
+2. `fixed`
+   - 規格で決まった固定ハフマンを使う
+3. `dynamic`
+   - データごとに頻度を数えて専用のハフマンを作る
+
+## 固定ハフマンの意味
+
+固定ハフマンは、木の情報を毎回送らなくてよいのでヘッダが軽く済みます。  
+短いデータでは、動的ハフマンより有利になることがあります。
+
+## 動的ハフマンの意味
+
+一方で長いデータや偏りの強いデータでは、動的ハフマンが強くなります。
+
+なぜなら、実データに合わせて
+
+- よく出る literal/length
+- よく出る distance
+
+に短い符号を与えられるからです。
+
+ただし、木の情報を送るための追加コストがかかります。  
+だから「何でも dynamic が最強」ではありません。
+
+## `auto` はどう選ぶか
+
+`compress_deflate(data, mode="auto")` のやり方は単純です。
+
+1. `dynamic`
+2. `fixed`
+3. `stored`
+
+3つを実際に作り、
+
+`min(options, key=len)`
+
+で最短を選んでいます。
+
+`auto` は理論値ではなく、実際に作った結果の長さで決めています。
+
+## ここからコードと出力で確認する
+
+このリポジトリでも [deflate.py](https://github.com/sekihan02/zip-edu/blob/master/src/zip_edu/deflate.py) の `_encode_lz77_tokens` がその役割を担います。
+
+```python
+for token in tokens:
+    if isinstance(token, LiteralToken):
+        write_symbol(writer, literal_codes, token.value)
+        continue
+
+    length_symbol, length_extra, length_extra_bits = length_to_symbol(token.length)
+    write_symbol(writer, literal_codes, length_symbol)
+    if length_extra_bits:
+        writer.write_bits(length_extra, length_extra_bits)
+
+    dist_symbol, dist_extra, dist_extra_bits = distance_to_symbol(token.distance)
+    write_symbol(writer, distance_codes, dist_symbol)
+    if dist_extra_bits:
+        writer.write_bits(dist_extra, dist_extra_bits)
+```
+
+ここを見ると、Deflate が
+
+- literal/length 用の符号表
+- distance 用の符号表
+
+を分けて使う理由が、そのまま見えてきます。
+
+[huffman.py](https://github.com/sekihan02/zip-edu/blob/master/src/zip_edu/huffman.py) では、
+
+- `build_code_lengths_from_frequencies`
+- `build_canonical_codes`
+- `HuffmanDecoder.from_code_lengths`
+
+が中心になります。
+
+正準ハフマンのコアはこうです。
+
+```python
+for bits in range(1, max_bits + 1):
+    code = (code + bl_count[bits - 1]) << 1
+    next_code[bits] = code
+
+for symbol, length in enumerate(lengths):
+    if length == 0:
+        continue
+    code = next_code[length]
+    if reverse_for_deflate:
+        code = reverse_bits(code, length)
+    out[symbol] = (code, length)
+    next_code[length] += 1
+```
+
+この処理は、「同じ符号長を持つシンボルに連番を振って canonical code を作る」部分です。
+
+この実装も [deflate.py](https://github.com/sekihan02/zip-edu/blob/master/src/zip_edu/deflate.py) に
+
+- `compress_deflate_stored`
+- `compress_deflate_fixed`
+- `compress_deflate_dynamic`
+
+を分けて持っています。
+
+`auto` の判断も、実際のコードでは次のように全部作って比べています。
+
+```python
+def compress_deflate(data: bytes, mode: str = "auto") -> bytes:
+    if mode == "auto":
+        options = [
+            compress_deflate_dynamic(data),
+            compress_deflate_fixed(data),
+            compress_deflate_stored(data),
+        ]
+        return min(options, key=len)
+```
+
+短いデータでは、実際に `fixed` が勝つこともあります。
+
+```text
+mode_bytes[dynamic]=20
+mode_bytes[fixed]=10
+mode_bytes[stored]=16
+auto_choice=fixed
+```
+
+短いデータでは、木の情報を送るぶん dynamic が不利になることがここに表れています。
+
+## 最後にもう一度答えると
+
+- ハフマンは「よく出るものを短くする」
+- ただし prefix-free でないと復号できない
+- Deflate では literal/length と distance を別々に符号化する
+- 固定ハフマンと動的ハフマンはトレードオフ
+
+次回は、これらがどうやって本当にビット列になるのかを見ます。
+
+## 参考
+
+[^rfc1951-trees]: RFC 1951, sections 3.2.5 and 3.2.7. https://www.rfc-editor.org/rfc/rfc1951

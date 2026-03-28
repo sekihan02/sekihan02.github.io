@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1150" height="300" viewBox="0 0 1150 300">
+  <style>
+    .title { font: 700 28px "Noto Sans JP", sans-serif; fill: #111827; }
+    .label { font: 700 16px "Noto Sans JP", sans-serif; fill: #111827; }
+    .small { font: 13px "Noto Sans JP", sans-serif; fill: #374151; }
+    .box { stroke: #1f2937; stroke-width: 2; }
+  </style>
+  <text x="40" y="42" class="title">このリポジトリのサンプル ZIP の並び</text>
+  <rect x="40" y="100" width="150" height="90" fill="#dbeafe" class="box"/>
+  <rect x="190" y="100" width="110" height="90" fill="#dcfce7" class="box"/>
+  <rect x="300" y="100" width="120" height="90" fill="#fef3c7" class="box"/>
+  <rect x="420" y="100" width="170" height="90" fill="#dbeafe" class="box"/>
+  <rect x="590" y="100" width="120" height="90" fill="#dcfce7" class="box"/>
+  <rect x="710" y="100" width="120" height="90" fill="#fef3c7" class="box"/>
+  <rect x="830" y="100" width="210" height="90" fill="#fde68a" class="box"/>
+  <rect x="1040" y="100" width="70" height="90" fill="#fecaca" class="box"/>
+  <text x="115" y="130" text-anchor="middle" class="label">ローカルヘッダ #1</text>
+  <text x="245" y="130" text-anchor="middle" class="label">データ #1</text>
+  <text x="360" y="130" text-anchor="middle" class="label">Descriptor #1</text>
+  <text x="505" y="130" text-anchor="middle" class="label">ローカルヘッダ #2</text>
+  <text x="650" y="130" text-anchor="middle" class="label">データ #2</text>
+  <text x="770" y="130" text-anchor="middle" class="label">Descriptor #2</text>
+  <text x="935" y="130" text-anchor="middle" class="label">中央ディレクトリ</text>
+  <text x="1075" y="130" text-anchor="middle" class="label">EOCD</text>
+  <text x="115" y="160" text-anchor="middle" class="small">PK 03 04</text>
+  <text x="360" y="160" text-anchor="middle" class="small">PK 07 08</text>
+  <text x="770" y="160" text-anchor="middle" class="small">PK 07 08</text>
+  <text x="935" y="160" text-anchor="middle" class="small">PK 01 02 ...</text>
+  <text x="1075" y="160" text-anchor="middle" class="small">PK 05 06</text>
+  <text x="40" y="235" class="small">前半に各ファイルの実データ、後半に全体の目次、最後に EOCD が来る。</text>
+  <text x="40" y="258" class="small">この「後ろに目次がある」構造のおかげで、一覧表示やオフセット解決がしやすい。</text>
+</svg>

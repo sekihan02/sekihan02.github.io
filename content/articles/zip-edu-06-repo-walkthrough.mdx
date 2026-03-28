@@ -1,0 +1,190 @@
+---
+title: "第6回: zip-eduをどう読むとZIPの仕組みが分かるか"
+slug: "zip-edu-06-repo-walkthrough"
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+summary: "ZIP の基本動作を実装した zip-edu を、どの順番で読むと仕組みが分かりやすいか整理します。"
+category: "ZIP"
+tags:
+  - "ZIP"
+  - "Deflate"
+  - "実装読解"
+  - "Python"
+draft: false
+---
+# 第6回: zip-eduをどう読むとZIPの仕組みが分かるか
+
+この連載で扱っている [zip-edu](https://github.com/sekihan02/zip-edu/tree/master) は、ZIP の基本動作を `zipfile` や `zlib` に頼らずスクラッチで実装した学習用リポジトリです。
+
+この回では、ここまで読んできた各部品がリポジトリ全体のどこにあるのかを整理し、どの順に読むと ZIP の仕組みが頭に入りやすいかをまとめます。
+
+## まず連載全体の地図
+
+この連載は、ZIP を次の順で追っていきます。
+
+1. 第1回: ZIP 全体の役割と流れをつかむ
+2. 第2回: LZ77 で繰り返しをトークンに変える
+3. 第3回: ハフマン符号でトークンを短いビット列にする
+4. 第4回: Deflate をブロックとビット列として組み立てる
+5. 第5回: できたデータを ZIP コンテナに入れる
+6. 第6回: ここまでの仕組みがリポジトリのどこにあるか整理する（今回）
+7. 第7回: 基本実装の外側にある拡張仕様を見る
+
+この第6回は、ここまで分けて見てきた部品を、コード全体の中でつなぎ直す回です。  
+ZIP 全体で見たときに、どのファイルがどの役割を持ち、圧縮と展開の流れがリポジトリ内でどうつながるかを整理します。
+
+## この回で答える問い
+
+- 仕様とコードの対応をつける
+- どの順にファイルを読むと理解しやすいかを示す
+- pack と unpack が、どの部品をどんな順で通るのかを整理する
+
+## 先に答えると
+
+- 読み始める順番は、小さい部品から大きい部品へ進むのが分かりやすいです。
+- ZIP の本質を見るなら `zip_format.py` と `deflate.py` が中心です。
+- `explain` 系コマンドとテストを見ると、実装の意図がかなり早くつかめます。
+
+## リポジトリ全体の流れ
+
+このリポジトリは、次の層に分かれています。
+
+1. `bitstream.py`
+   - ビットを読む・書く
+2. `lz77.py`
+   - 文字列を `literal` と `match` に分ける
+3. `huffman.py`
+   - シンボルへ符号を割り当てる
+4. `deflate.py`
+   - Deflate のビット列を作る・読む
+5. `crc32.py`
+   - 整合性確認の値を計算する
+6. `zip_format.py`
+   - ZIP の各レコードを組み立てる・読む
+7. `service.py` と `cli.py`
+   - 外から呼び出す入口になる
+
+要するに、下の層ほど部品に近く、上の層ほど「ZIP として使う」形に近づきます。
+
+![Repository map](/images/articles/zip-edu-06-repo-walkthrough/06_code_map.svg)
+
+## 圧縮の流れ
+
+圧縮パスは、だいたい次の関数列です。
+
+1. `cli.py`
+   - `pack`
+2. `service.py`
+   - `pack_zip`
+3. `zip_format.py`
+   - `build_zip`
+4. `zip_format.py`
+   - `_compress_data`
+5. `deflate.py`
+   - `compress_deflate`
+6. `lz77.py`
+   - `lz77_encode`
+7. `huffman.py`
+   - 符号長と正準符号の生成
+
+CLI は入口です。  
+中核になるのは `zip_format.py` と `deflate.py` です。
+
+## 展開の流れ
+
+展開パスは逆向きです。
+
+1. `cli.py`
+   - `unpack`
+2. `service.py`
+   - `unpack_zip`
+3. `zip_format.py`
+   - `parse_central_directory`
+4. `zip_format.py`
+   - `extract_all`
+5. `deflate.py`
+   - `decompress_deflate`
+6. `crc32.py`
+   - CRC 検証
+
+この流れを見ると、ZIP の展開は
+
+- まず箱を読む
+- その後で圧縮方式ごとの展開へ降りる
+
+という順番だということです。
+
+## どこを見ると意図が分かるか
+
+このリポジトリで意図をつかみやすいのは、次の3点です。
+
+- 圧縮ライブラリに頼っていない
+  - 仕様の概念がそのまま関数に出てくる
+- 層が分かれている
+  - bit IO / LZ77 / Huffman / Deflate / ZIP コンテナを分けて読める
+- `explain` がある
+  - 読むだけでなく、実行して確かめられる
+
+## この実装で単純化している部分
+
+- LZ77 探索はナイーブ
+  - 高速化より理解を優先している
+- `auto` は実際に全部作って比較する
+  - 理論値ではなく、できた結果のサイズで選ぶ
+- GUI をコアから外している
+  - ZIP の理解に必要な部分だけを追いやすい
+
+## テストはどこを見るべきか
+
+[tests](https://github.com/sekihan02/zip-edu/tree/master/tests) は、理解を確かめるうえでも重要です。
+
+- `test_lz77.py`
+  - 距離と長さの制約
+- `test_deflate.py`
+  - `stored / fixed / dynamic` の往復
+- `test_zip_format.py`
+  - `zipfile` 互換性
+- `test_explain.py`
+  - 学習用説明出力の確認
+- `test_project_intent.py`
+  - コアが圧縮ライブラリに依存していないことの確認
+
+テストは、単なる品質保証だけでなく、「この実装が何を大事にしているか」を示すものでもあります。
+
+## 実装していないもの
+
+ここは正直に把握した方が理解が深まります。
+
+- ZIP64
+- 暗号化
+- 分割 ZIP
+- Deflate 以外の実装
+- 高速辞書探索
+- 仕様の細かな拡張フィールド全部
+
+ただ、これは弱点というより「教材としてそう切っている」ということです。
+
+## ここから実際にファイルを見る
+
+おすすめの読み順は次です。
+
+1. [bitstream.py](https://github.com/sekihan02/zip-edu/blob/master/src/zip_edu/bitstream.py)
+2. [lz77.py](https://github.com/sekihan02/zip-edu/blob/master/src/zip_edu/lz77.py)
+3. [huffman.py](https://github.com/sekihan02/zip-edu/blob/master/src/zip_edu/huffman.py)
+4. [deflate.py](https://github.com/sekihan02/zip-edu/blob/master/src/zip_edu/deflate.py)
+5. [crc32.py](https://github.com/sekihan02/zip-edu/blob/master/src/zip_edu/crc32.py)
+6. [zip_format.py](https://github.com/sekihan02/zip-edu/blob/master/src/zip_edu/zip_format.py)
+7. [service.py](https://github.com/sekihan02/zip-edu/blob/master/src/zip_edu/service.py)
+8. [cli.py](https://github.com/sekihan02/zip-edu/blob/master/src/zip_edu/cli.py)
+9. [tests](https://github.com/sekihan02/zip-edu/tree/master/tests)
+
+この順で読むと、小さい部品から大きい部品へ無理なく追えます。
+
+## 最後にもう一度答えると
+
+- このリポジトリは ZIP 学習用として読みやすい
+- コアロジックは層ごとに分かれている
+- explain 系コマンドで動かしながら理解できる
+- 未実装範囲を知ることで、逆に実装範囲の輪郭がはっきりする
+
+次回は、未実装部分も含めて ZIP 全体の地図を整理します。

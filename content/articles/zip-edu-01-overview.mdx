@@ -1,0 +1,273 @@
+---
+title: "第1回: ZIP実装を読む前に、ZIPが何をしている形式か整理する"
+slug: "zip-edu-01-overview"
+publishedAt: 2026-03-12
+updatedAt: 2026-03-14
+summary: "zip-edu を読む前提として、ZIP が圧縮方式ではなく複数ファイルをまとめる形式だと整理します。"
+category: "ZIP"
+tags:
+  - "ZIP"
+  - "Deflate"
+  - "アーカイブ"
+  - "Central Directory"
+draft: false
+---
+# 第1回: ZIP実装を読む前に、ZIPが何をしている形式か整理する
+
+## このシリーズを始める理由
+
+ZIP について知りたくなったので、[zip-edu](https://github.com/sekihan02/zip-edu/tree/master) という学習用の実装をスクラッチで作りました。
+
+この連載では、そのコードを読みながら、調べた ZIP の基本的な動きを順に整理していきます。
+
+この第1回では、ZIP が何をしている形式なのかを先に整理します。
+
+## この連載で扱うもの
+
+ここでは、仕組みを理解し、対応するコードを読み解きながら
+
+- ZIP コンテナ
+- Deflate
+- LZ77
+- ハフマン符号
+- CRC32
+
+という ZIP の基本的な仕組みが、どうつながって動いているのかをまとめていきます。
+
+## まず連載全体の地図
+
+この連載は、ZIP を次の順で追っていきます。
+
+1. 第1回: ZIP 全体の役割と流れをつかむ（今回）
+2. 第2回: LZ77 で繰り返しをトークンに変える
+3. 第3回: ハフマン符号でトークンを短いビット列にする
+4. 第4回: Deflate をブロックとビット列として組み立てる
+5. 第5回: できたデータを ZIP コンテナに入れる
+6. 第6回: ここまでの仕組みがリポジトリのどこにあるか整理する
+7. 第7回: 基本実装の外側にある拡張仕様を見る
+
+この第1回は、その土台になる回です。  
+まず ZIP 全体が何をしている形式なのかをつかんでおくと、以降の回で出てくる LZ77 や Deflate やヘッダの話が、ZIP 全体のどこにあるか見失いにくくなります。
+
+## この回で答える問い
+
+- ZIP は圧縮形式なのか、それとも複数ファイルをまとめる形式なのか
+- なぜ ZIP を開くと、ファイル数や名前や場所が分かるのか
+- ZIP 全体では、どんな流れで作られて、どんな流れで読まれるのか
+
+## 先に答えると
+
+- ZIP はまず「複数ファイルをまとめる形式」です。
+- 圧縮は ZIP の中で使える部品の1つです。
+- ファイル数や名前や場所が分かるのは、末尾に EOCD と中央ディレクトリがあるからです。
+- 作る側は前半に各ファイルの情報とデータを並べ、最後に目次を付けます。読む側は最後の目次から一覧を作り、必要な本体だけを読みに行きます。
+
+## ZIP 全体の流れ
+
+ZIP 全体でやっていることは、次の5段階です。
+
+1. 複数のファイルを受け取る
+2. 各ファイルについて、名前などの情報とデータを順に並べる
+3. 最後に、全ファイル分の目次をまとめて置く
+4. 開く側は、その目次を読んでファイル一覧を作る
+5. 必要なファイルだけ、記録された場所へ移動して中身を読む
+
+圧縮がある場合は、2の「データを並べる」の前に各ファイルのデータを圧縮します。
+つまり ZIP の中心は、圧縮そのものよりも「複数ファイルを並べて、最後に目次を持たせること」です。
+
+## まずはイメージから
+
+ZIP を、学校に持っていく「大きなファイルケース」だと思ってください。
+
+- 中にはプリントが何枚も入る
+- プリントには名前が書いてある
+- ケースの最後には「何がどこに入っているか」という目次がある
+
+この「最後にある目次」が ZIP のとても大事な特徴です。
+
+![ZIP overview](/images/articles/zip-edu-01-overview/01_zip_overview.svg)
+![Archive vs compression](/images/articles/zip-edu-01-overview/01_archive_vs_compression.svg)
+
+ZIP を開くソフトは、まず最後の方にある目次を見ます。
+すると、
+
+- 何個ファイルがあるか
+- それぞれの名前は何か
+- 本体はどの場所にあるか
+
+が分かります。
+だから ZIP は、複数のファイルをひとつにまとめたまま扱えます。
+
+## 少し具体化すると
+
+ZIP の中には、ざっくり次の順でデータが入っています。
+
+1. ファイルAのヘッダ
+2. ファイルAのデータ
+3. ファイルBのヘッダ
+4. ファイルBのデータ
+5. 全ファイル分の目次
+6. ZIP 全体の終端情報
+
+この連載で使う [zip_format.py](https://github.com/sekihan02/zip-edu/blob/master/src/zip_edu/zip_format.py) は、この「箱の形式」を作ったり読んだりするファイルです。
+
+ZIP の最後には EOCD があります。
+EOCD には「中央ディレクトリがどこから始まるか」と「中央ディレクトリが何件あるか」が入っています。
+
+中央ディレクトリは、全ファイル分の目次です。
+各項目には、次の情報が入っています。
+
+- ファイル名
+- 圧縮サイズ
+- 元のサイズ
+- そのファイルのローカルヘッダがどこにあるか
+
+そのため、ZIP を開くソフトは
+
+1. まず最後の EOCD を見つける
+2. EOCD を読んで、目次の開始位置と件数を知る
+3. 目次を順番に読み、各ファイルの名前と位置を集める
+
+という順で動けます。
+
+この3段階で分かるのは、
+
+- 何個ファイルがあるか
+- それぞれの名前は何か
+- それぞれの本体へたどる入口がどこにあるか
+
+です。
+
+要するに、一覧や位置を知るうえで中心になるのは EOCD と中央ディレクトリです。  
+前半にある各ファイルのヘッダや data descriptor は、そのあとでファイルの中身を読むときに使います。
+
+つまり ZIP は、単なる「圧縮された1本のビット列」ではなく、
+
+- ファイルごとの情報
+- ファイルごとの圧縮データ
+- 最後の目次
+
+を持っています。
+
+## 「圧縮」と「アーカイブ」を分ける
+
+- アーカイブ: 複数ファイルを1つの入れ物にまとめる
+- 圧縮: データを小さくする
+
+ZIP はこの2つを同時にやることが多いので、同じものに見えます。
+でも実際には別の層です。
+
+![ZIP layers](/images/articles/zip-edu-01-overview/01_zip_layers.svg)
+
+このリポジトリでは、その役割ごとにファイルが分かれています。
+
+- [zip_format.py](https://github.com/sekihan02/zip-edu/blob/master/src/zip_edu/zip_format.py)
+  - ZIP コンテナ
+- [deflate.py](https://github.com/sekihan02/zip-edu/blob/master/src/zip_edu/deflate.py)
+  - Deflate 圧縮
+- [lz77.py](https://github.com/sekihan02/zip-edu/blob/master/src/zip_edu/lz77.py)
+  - LZ77
+- [huffman.py](https://github.com/sekihan02/zip-edu/blob/master/src/zip_edu/huffman.py)
+  - ハフマン符号
+
+## 仕様として何が決まっているか
+
+PKWARE の APPNOTE では、ZIP 全体の並びは次のように説明されています。[^appnote-layout]
+
+- ローカルヘッダとファイルデータがファイルごとに並ぶ
+- 後ろにセントラルディレクトリが並ぶ
+- 最後に EOCD がある
+
+さらに、圧縮方式はファイルごとに記録されます。
+このコードでは次の2つが中心です。
+
+- method `0`: Store
+- method `8`: Deflate
+
+APPNOTE の compression method 一覧でも、この2つは基本となる値です。[^appnote-method]
+
+## なぜ中央ディレクトリが便利なのか
+
+ファイル一覧を出力したいだけなら、本来は最初から最後まですべてのデータを確認する必要がありそうです。
+でも ZIP には中央ディレクトリがあります。
+
+これによって、一覧表示のコストをかなり下げられます。
+
+考え方は単純です。
+
+- 各ファイルの本体は前半に置く
+- 各ファイルの要約情報だけを後半にまとめる
+
+これは本で言うと「本文」と「巻末の目次」が分かれている状態です。
+
+一覧表示だけしたいなら、本体を全部読む必要はありません。
+後半にある中央ディレクトリだけを読めばよいことが多いので、読む量をかなり減らせます。
+
+## ここから出力とコードで確認する
+
+この連載では、[examples/sample.zip](/downloads/articles/zip-edu/sample.zip) を使います。
+これはこのリポジトリ自身の CLI で作った ZIP です。
+
+`explain-zip` の結果はこうなります。
+
+```text
+zip_bytes=284
+eocd_offset=262
+central_directory_offset=143
+central_directory_size=119
+entry_count=2
+comment_length=0
+input/a.txt: local_header=0 data=41 method=deflate compressed=10 uncompressed=18 flags=bit3-data-descriptor,utf8-name
+input/deep/b.txt: local_header=67 data=113 method=deflate compressed=14 uncompressed=18 flags=bit3-data-descriptor,utf8-name
+```
+
+この出力だけでも、このようなことがわかります。
+
+- ZIP 全体は 284 バイト
+- 目次はオフセット 143 から始まる
+- 最後の EOCD は 262 バイト目にある
+- 2つのファイルが入っている
+- 各ファイルのデータ本体の開始位置が分かる
+
+つまり ZIP は「後ろに目次を持つ」から読みやすいのです。
+
+## コードで見ると、目次はこう読まれる
+
+中央ディレクトリを読む処理の入口は [zip_format.py](https://github.com/sekihan02/zip-edu/blob/master/src/zip_edu/zip_format.py) の `parse_central_directory()` です。
+
+```python
+def parse_central_directory(data: bytes) -> list[ZipEntryInfo]:
+    eocd_offset = find_eocd_offset(data)
+    (
+        _sig,
+        _disk_no,
+        _cd_disk_no,
+        _entries_on_disk,
+        entry_count,
+        cd_size,
+        cd_offset,
+        comment_len,
+    ) = struct.unpack_from("<IHHHHIIH", data, eocd_offset)
+```
+
+ここでやっていることはとても素直です。
+
+1. まず EOCD を見つける
+2. そこから中央ディレクトリの開始位置とサイズを読む
+3. その情報を使って、各エントリを順番に読む
+
+「後ろにある EOCD を見つけると、前にある目次へたどれる」という ZIP の構造が、そのままコードになっています。
+
+## 最後にもう一度答えると
+
+- ZIP は箱である
+- 圧縮は箱の中の1部品である
+- ZIP の本質は「ファイル本体」と「後ろの目次」にある
+- このリポジトリは、その2層を分けて実装している
+
+次回は、その中の圧縮部品の最初の段階、LZ77 に入ります。
+
+## 参考
+
+[^appnote-layout]: PKWARE, "APPNOTE.TXT", sections 4.3.6, 4.3.12 and 4.3.16. https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT
+[^appnote-method]: PKWARE, "APPNOTE.TXT", section 4.4.5. https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT

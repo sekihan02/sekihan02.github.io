@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="330" viewBox="0 0 1100 330">
+  <style>
+    .title { font: 700 28px "Noto Sans JP", sans-serif; fill: #111827; }
+    .label { font: 700 18px "Noto Sans JP", sans-serif; fill: #111827; }
+    .small { font: 14px "Noto Sans JP", sans-serif; fill: #374151; }
+    .box { stroke: #1f2937; stroke-width: 2; rx: 12; ry: 12; }
+  </style>
+  <text x="40" y="42" class="title">DEFLATE ブロックの基本形</text>
+  <rect x="40" y="90" width="130" height="78" fill="#dbeafe" class="box"/>
+  <rect x="170" y="90" width="130" height="78" fill="#dbeafe" class="box"/>
+  <rect x="300" y="90" width="420" height="78" fill="#dcfce7" class="box"/>
+  <rect x="720" y="90" width="140" height="78" fill="#fef3c7" class="box"/>
+  <text x="105" y="122" text-anchor="middle" class="label">BFINAL</text>
+  <text x="105" y="147" text-anchor="middle" class="small">最後のブロック?</text>
+  <text x="235" y="122" text-anchor="middle" class="label">BTYPE</text>
+  <text x="235" y="147" text-anchor="middle" class="small">方式</text>
+  <text x="510" y="122" text-anchor="middle" class="label">ブロック本体</text>
+  <text x="510" y="147" text-anchor="middle" class="small">stored / fixed / dynamic で中身が変わる</text>
+  <text x="790" y="122" text-anchor="middle" class="label">終端</text>
+  <text x="790" y="147" text-anchor="middle" class="small">256</text>
+  <rect x="40" y="215" width="250" height="80" fill="#e0f2fe" class="box"/>
+  <text x="165" y="246" text-anchor="middle" class="label">00 = stored</text>
+  <text x="165" y="271" text-anchor="middle" class="small">非圧縮 / LEN / NLEN / 生データ</text>
+  <rect x="325" y="215" width="250" height="80" fill="#dcfce7" class="box"/>
+  <text x="450" y="246" text-anchor="middle" class="label">01 = fixed</text>
+  <text x="450" y="271" text-anchor="middle" class="small">固定ハフマン表を使う</text>
+  <rect x="610" y="215" width="250" height="80" fill="#fef3c7" class="box"/>
+  <text x="735" y="246" text-anchor="middle" class="label">10 = dynamic</text>
+  <text x="735" y="271" text-anchor="middle" class="small">符号長の情報も先に送る</text>
+  <rect x="895" y="215" width="140" height="80" fill="#fecaca" class="box"/>
+  <text x="965" y="246" text-anchor="middle" class="label">11</text>
+  <text x="965" y="271" text-anchor="middle" class="small">予約済み / 不正</text>
+</svg>

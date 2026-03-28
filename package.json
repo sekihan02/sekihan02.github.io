@@ -1,0 +1,28 @@
+{
+  "name": "sekihan02.github.io",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/site"
+  ],
+  "scripts": {
+    "content:build": "node scripts/content/build-content.mjs",
+    "dev:site": "npm run dev --workspace @sekihan02/site",
+    "dev:agent": "powershell -ExecutionPolicy Bypass -File .\\scripts\\run-python.ps1 apps/agent-vercel/dev_server.py",
+    "dev": "npm run dev:site",
+    "typecheck": "npm run typecheck --workspace @sekihan02/site",
+    "test:site": "node --test tests/site/**/*.test.mjs",
+    "test:agent": "powershell -ExecutionPolicy Bypass -File .\\scripts\\run-python.ps1 -m unittest discover -s tests/agent -p test_*.py",
+    "test": "npm run test:site && npm run test:agent",
+    "build:site": "npm run build --workspace @sekihan02/site",
+    "build:pages": "npm run build:site",
+    "build": "npm run build:site"
+  },
+  "dependencies": {
+    "gray-matter": "4.0.3"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="道草ログ">
+  <defs>
+    <linearGradient id="bg" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#bc7d2b" />
+      <stop offset="1" stop-color="#5f7b67" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="url(#bg)" />
+  <path
+    d="M16 43c6-11 11-16 16-16 6 0 9 8 15 8 3 0 5-1 7-3"
+    fill="none"
+    stroke="#fff8ef"
+    stroke-width="5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <circle cx="17" cy="22" r="3" fill="#fff8ef" />
+  <circle cx="32" cy="18" r="2.5" fill="#fff8ef" />
+</svg>

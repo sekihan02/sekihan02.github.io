@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="430" viewBox="0 0 1160 430">
+  <style>
+    .title { font: 700 28px "Noto Sans JP", sans-serif; fill: #111827; }
+    .label { font: 700 17px "Noto Sans JP", sans-serif; fill: #111827; }
+    .small { font: 14px "Noto Sans JP", sans-serif; fill: #374151; }
+    .box { fill: #ffffff; stroke: #1f2937; stroke-width: 2; rx: 12; ry: 12; }
+  </style>
+  <text x="40" y="42" class="title">このリポジトリのコードの地図</text>
+  <rect x="40" y="90" width="220" height="90" class="box" fill="#dbeafe"/>
+  <rect x="320" y="90" width="220" height="90" class="box" fill="#dcfce7"/>
+  <rect x="600" y="90" width="220" height="90" class="box" fill="#fef3c7"/>
+  <rect x="880" y="90" width="220" height="90" class="box" fill="#fde68a"/>
+  <text x="150" y="125" text-anchor="middle" class="label">bitstream.py</text>
+  <text x="150" y="150" text-anchor="middle" class="small">ビット単位で読む / 書く</text>
+  <text x="430" y="125" text-anchor="middle" class="label">lz77.py</text>
+  <text x="430" y="150" text-anchor="middle" class="small">Literal / Match に分ける</text>
+  <text x="710" y="125" text-anchor="middle" class="label">huffman.py</text>
+  <text x="710" y="150" text-anchor="middle" class="small">符号長から正準ハフマン</text>
+  <text x="990" y="125" text-anchor="middle" class="label">deflate.py</text>
+  <text x="990" y="150" text-anchor="middle" class="small">圧縮 / 解凍の本体</text>
+  <rect x="220" y="270" width="220" height="90" class="box" fill="#e0f2fe"/>
+  <rect x="500" y="270" width="220" height="90" class="box" fill="#dcfce7"/>
+  <rect x="780" y="270" width="220" height="90" class="box" fill="#fecaca"/>
+  <text x="330" y="305" text-anchor="middle" class="label">crc32.py</text>
+  <text x="330" y="330" text-anchor="middle" class="small">整合性チェック</text>
+  <text x="610" y="305" text-anchor="middle" class="label">zip_format.py</text>
+  <text x="610" y="330" text-anchor="middle" class="small">ZIP ヘッダ / 目次 / EOCD</text>
+  <text x="890" y="305" text-anchor="middle" class="label">service.py / cli.py</text>
+  <text x="890" y="330" text-anchor="middle" class="small">pack / unpack / explain</text>
+  <line x1="260" y1="135" x2="320" y2="135" stroke="#111827" stroke-width="3"/>
+  <line x1="540" y1="135" x2="600" y2="135" stroke="#111827" stroke-width="3"/>
+  <line x1="820" y1="135" x2="880" y2="135" stroke="#111827" stroke-width="3"/>
+  <line x1="960" y1="180" x2="650" y2="270" stroke="#111827" stroke-width="3"/>
+  <line x1="420" y1="315" x2="500" y2="315" stroke="#111827" stroke-width="3"/>
+  <line x1="720" y1="315" x2="780" y2="315" stroke="#111827" stroke-width="3"/>
+  <text x="40" y="395" class="small">まず上段を左から読み、そのあと下段の zip_format.py に進むと全体の流れがつかみやすい。</text>
+</svg>

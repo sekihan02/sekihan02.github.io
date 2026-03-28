@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="300" viewBox="0 0 1100 300">
+  <style>
+    .title { font: 700 28px "Noto Sans JP", sans-serif; fill: #111827; }
+    .label { font: 700 18px "Noto Sans JP", sans-serif; fill: #111827; }
+    .small { font: 14px "Noto Sans JP", sans-serif; fill: #374151; }
+    .cell { stroke: #1f2937; stroke-width: 2; }
+  </style>
+  <text x="40" y="42" class="title">LZ77 の見方: 直前のデータの中に同じ並びがないか探す</text>
+  <rect x="40" y="100" width="560" height="84" fill="#dbeafe" class="cell"/>
+  <rect x="600" y="100" width="250" height="84" fill="#fef3c7" class="cell"/>
+  <rect x="850" y="100" width="180" height="84" fill="#dcfce7" class="cell"/>
+  <text x="320" y="135" text-anchor="middle" class="label">検索窓</text>
+  <text x="320" y="160" text-anchor="middle" class="small">すでに出力した過去データ</text>
+  <text x="725" y="135" text-anchor="middle" class="label">先読み部分</text>
+  <text x="725" y="160" text-anchor="middle" class="small">今から符号化する部分</text>
+  <text x="940" y="135" text-anchor="middle" class="label">まだ先</text>
+  <text x="940" y="160" text-anchor="middle" class="small">未処理データ</text>
+  <text x="40" y="225" class="small">LZ77 は「先読み部分の先頭と同じ並びが、検索窓のどこかにないか」を探す。</text>
+  <text x="40" y="248" class="small">見つかったら (長さ, 距離) で表し、見つからなければ 1 バイトをそのまま出す。</text>
+  <text x="40" y="271" class="small">このリポジトリでは、検索窓の最大サイズは 32KiB、最長一致長は 258 バイト。</text>
+</svg>

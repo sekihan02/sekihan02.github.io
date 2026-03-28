@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="340" viewBox="0 0 1100 340">
+  <style>
+    .title { font: 700 28px "Noto Sans JP", sans-serif; fill: #111827; }
+    .label { font: 700 18px "Noto Sans JP", sans-serif; fill: #111827; }
+    .small { font: 14px "Noto Sans JP", sans-serif; fill: #374151; }
+    .box { fill: #ffffff; stroke: #1f2937; stroke-width: 2; rx: 12; ry: 12; }
+    .edge { stroke: #1f2937; stroke-width: 2; }
+  </style>
+  <text x="40" y="42" class="title">ハフマン符号: よく出るものを短く、あまり出ないものを長くする</text>
+  <rect x="40" y="90" width="250" height="190" fill="#e0f2fe" class="box"/>
+  <text x="165" y="125" text-anchor="middle" class="label">頻度表</text>
+  <text x="85" y="165" class="small">A : 8 回</text>
+  <text x="85" y="195" class="small">B : 4 回</text>
+  <text x="85" y="225" class="small">C : 2 回</text>
+  <text x="85" y="255" class="small">D : 2 回</text>
+  <circle cx="520" cy="105" r="28" class="box"/>
+  <circle cx="450" cy="185" r="24" class="box"/>
+  <circle cx="590" cy="185" r="24" class="box"/>
+  <circle cx="410" cy="265" r="22" class="box"/>
+  <circle cx="490" cy="265" r="22" class="box"/>
+  <circle cx="560" cy="265" r="22" class="box"/>
+  <circle cx="640" cy="265" r="22" class="box"/>
+  <line x1="505" y1="130" x2="465" y2="165" class="edge"/>
+  <line x1="535" y1="130" x2="575" y2="165" class="edge"/>
+  <line x1="438" y1="205" x2="420" y2="245" class="edge"/>
+  <line x1="462" y1="205" x2="480" y2="245" class="edge"/>
+  <line x1="578" y1="205" x2="568" y2="243" class="edge"/>
+  <line x1="602" y1="205" x2="630" y2="243" class="edge"/>
+  <text x="520" y="111" text-anchor="middle" class="small">16</text>
+  <text x="450" y="191" text-anchor="middle" class="small">4</text>
+  <text x="590" y="191" text-anchor="middle" class="small">12</text>
+  <text x="410" y="271" text-anchor="middle" class="small">C</text>
+  <text x="490" y="271" text-anchor="middle" class="small">D</text>
+  <text x="560" y="271" text-anchor="middle" class="small">B</text>
+  <text x="640" y="271" text-anchor="middle" class="small">A</text>
+  <rect x="780" y="90" width="260" height="190" fill="#dcfce7" class="box"/>
+  <text x="910" y="125" text-anchor="middle" class="label">符号の例</text>
+  <text x="820" y="165" class="small">A → 1</text>
+  <text x="820" y="195" class="small">B → 01</text>
+  <text x="820" y="225" class="small">C → 000</text>
+  <text x="820" y="255" class="small">D → 001</text>
+  <text x="40" y="315" class="small">実際の DEFLATE では木そのものではなく「符号長」を送り、受信側が正準ハフマン符号を再構成する。</text>
+</svg>

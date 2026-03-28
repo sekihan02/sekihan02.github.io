@@ -1,0 +1,198 @@
+---
+title: "第7回: ZIP実装の外にある拡張仕様を整理する"
+slug: "zip-edu-07-advanced-topics"
+publishedAt: 2026-03-20
+updatedAt: 2026-03-20
+summary: "zip-edu では扱っていない ZIP64 や暗号化なども含め、基本実装の外側にある ZIP の拡張と次の学習ポイントを整理します。"
+category: "ZIP"
+tags:
+  - "ZIP"
+  - "ZIP64"
+  - "Deflate"
+  - "仕様"
+draft: false
+---
+# 第7回: ZIP実装の外にある拡張仕様を整理する
+
+ここまで読んできた [zip-edu](https://github.com/sekihan02/zip-edu/tree/master) は、ZIP の基本動作をライブラリに頼らず実装した学習用リポジトリです。
+
+この最終回では、その実装があえて扱っていない拡張仕様も含めて、ZIP 全体をどこまで理解できたかを整理します。
+
+## まず連載全体の地図
+
+この連載は、ZIP を次の順で追っていきます。
+
+1. 第1回: ZIP 全体の役割と流れをつかむ
+2. 第2回: LZ77 で繰り返しをトークンに変える
+3. 第3回: ハフマン符号でトークンを短いビット列にする
+4. 第4回: Deflate をブロックとビット列として組み立てる
+5. 第5回: できたデータを ZIP コンテナに入れる
+6. 第6回: ここまでの仕組みがリポジトリのどこにあるか整理する
+7. 第7回: 基本実装の外側にある拡張仕様を見る（今回）
+
+この第7回は、連載のまとめと次の入口に当たる回です。  
+ここまでで見てきた基本の ZIP を土台として、その外側にある ZIP64 や暗号化や追加の圧縮方式が、どこから話を広げるものなのかを整理します。
+
+## この回で答える問い
+
+- このリポジトリが扱わない ZIP の拡張を知る
+- 「ZIP を理解した」と言うために、どこまで知っておくべきか整理する
+- 次に何を読むべきかを示す
+- 基本の ZIP の外側に、どんな拡張が広がっているのか整理する
+
+## 先に答えると
+
+このリポジトリを読み切ると、ZIP の幹は理解できます。
+
+- ZIP コンテナ
+- Deflate
+- LZ77
+- ハフマン
+- CRC32
+- Central Directory
+- EOCD
+
+ただし「ZIP の全仕様」を完全に実装したことにはなりません。  
+ZIP は長い歴史の中で拡張されてきたからです。
+
+## 拡張仕様の見取り図
+
+この連載で扱ったのは、ZIP の土台になる部分です。
+
+1. ファイルを並べる ZIP コンテナ
+2. 圧縮方式としての Deflate
+3. 整合性確認の CRC32
+4. 末尾の EOCD と中央ディレクトリ
+
+その外側には、さらに次の拡張があります。
+
+- 大きなサイズに対応する ZIP64
+- 内容を保護する暗号化
+- Deflate 以外の圧縮方式
+- raw DEFLATE, zlib, gzip など周辺形式との違い
+
+この最終回では、基本の ZIP を押さえたうえで、その外側に何があるのかを整理します。
+
+## ZIP64
+
+普通の ZIP のサイズ欄やオフセット欄は 32 ビットです。  
+大きなファイルや巨大アーカイブではこれでは足りません。
+
+そこで ZIP64 では追加レコードを使って、より大きな値を持てるようにします。[^appnote-zip64]
+
+このリポジトリの README でも ZIP64 は未対応と明記されています。  
+そのため、大容量対応は次の学習テーマになります。
+
+## 暗号化
+
+APPNOTE には暗号化や strong encryption の記述もあります。[^appnote-encryption]
+しかし、このリポジトリは暗号化を扱いません。
+
+暗号化が入ると、
+
+- 圧縮
+- コンテナ
+- 鍵管理
+- 認証
+
+が混ざってしまい、本質が見えにくくなるからです。
+
+## 追加の圧縮方式
+
+ZIP は Deflate だけではありません。  
+APPNOTE の compression method 一覧には、Store, Deflate 以外にも BZIP2, LZMA などが載っています。[^appnote-method]
+
+ただし互換性を考えると、現実の基礎学習では
+
+- method 0 Store
+- method 8 Deflate
+
+を先に押さえるのが現実的です。
+
+## raw DEFLATE と zlib / gzip の違い
+
+ここは実装者が混乱しやすい場所です。
+
+![Wrapper compare](/images/articles/zip-edu-07-advanced-topics/07_wrapper_compare.svg)
+
+- raw DEFLATE
+  - 圧縮ブロック本体だけ
+- zlib
+  - DEFLATE + zlib header + Adler-32[^rfc1950]
+- gzip
+  - DEFLATE + gzip header + CRC32 + ISIZE[^rfc1952]
+
+ZIP の file data に入る Deflate は、普通は raw DEFLATE と考えるのが自然です。  
+このリポジトリもその前提で作られています。
+
+## 次に学ぶなら何か
+
+### 課題1
+
+`explain-zip` の出力を見ながら `sample.zip` の EOCD を手で読む。
+
+### 課題2
+
+`abracadabra` ではなく、もっと長い英文で
+
+- `stored`
+- `fixed`
+- `dynamic`
+
+のどれが勝つかを観察する。
+
+### 課題3
+
+`lz77.py` を高速化する案を考える。
+
+### 課題4
+
+ZIP64 を自前追加するとしたら、どの構造体に何を足すか設計する。
+
+## 「ZIP を理解した」と言える状態
+
+次の問いに、自分の言葉で答えられればかなり強いです。
+
+1. ZIP は圧縮形式か、アーカイブ形式か
+2. Deflate は何と何の組み合わせか
+3. なぜ Central Directory が必要か
+4. Data Descriptor は何のためにあるか
+5. `stored / fixed / dynamic` はどう違うか
+6. CRC32 は圧縮率のためか、整合性確認のためか
+7. raw DEFLATE と zlib/gzip はどう違うか
+
+この7問に答えられれば、少なくとも「ブラックボックスとして ZIP を使っている状態」からは抜けています。
+
+## 最後にもう一度答えると
+
+- `zip-edu` を読むと、ZIP の幹にある仕組みはかなり理解できます。
+- ただし ZIP64、暗号化、追加圧縮方式などは別途学ぶ必要があります。
+- それでも、ZIP をブラックボックスとして使う段階からは十分抜け出せます。
+
+## 連載の締め
+
+この連載では、
+
+- ZIP は箱である
+- 後ろに目次がある
+- Deflate は LZ77 + Huffman でできている
+
+という前提を、コードとビット列まで降ろして確認してきました。
+
+ZIP は一見すると古い形式ですが、実装してみると
+
+- データ構造
+- 可逆圧縮
+- ビット IO
+- 整合性検証
+- 互換性設計
+
+が詰まった、とても良い教材です。
+
+## 参考
+
+[^appnote-zip64]: PKWARE, "APPNOTE.TXT", sections 4.3.14, 4.3.15 and related ZIP64 records. https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT
+[^appnote-encryption]: PKWARE, "APPNOTE.TXT", section 6 and related records. https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT
+[^appnote-method]: PKWARE, "APPNOTE.TXT", section 4.4.5. https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT
+[^rfc1950]: RFC 1950. https://www.rfc-editor.org/rfc/rfc1950
+[^rfc1952]: RFC 1952. https://www.rfc-editor.org/rfc/rfc1952

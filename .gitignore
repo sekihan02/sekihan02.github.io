@@ -1,0 +1,17 @@
+node_modules/
+.next/
+out/
+dist/
+.venv/
+.vercel/
+__pycache__/
+*.pyc
+*.pyo
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.*.local
+coverage/
+content/exports/
