@@ -5,6 +5,7 @@ import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from .config import AppConfig
@@ -83,6 +84,17 @@ def _fetch_json(url: str) -> dict[str, Any]:
         return json.loads(response.read().decode("utf-8"))
 
 
+def _load_local_json(pathname: str) -> dict[str, Any] | None:
+    path = Path(pathname)
+    if not path.is_file():
+        return None
+
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
 def _load_json(url: str, cache_ref: dict[str, Any], empty_value: dict[str, Any]) -> dict[str, Any]:
     now = time.time()
     if (
@@ -104,10 +116,18 @@ def _load_json(url: str, cache_ref: dict[str, Any], empty_value: dict[str, Any])
 
 
 def load_search_index(config: AppConfig) -> dict[str, Any]:
+    local_index = _load_local_json(config.local_search_index_path)
+    if local_index is not None:
+        return local_index
+
     return _load_json(config.fallback_index_url, _search_index_cache, {"articles": []})
 
 
 def load_related_manifest(config: AppConfig) -> dict[str, Any]:
+    local_related = _load_local_json(config.local_related_manifest_path)
+    if local_related is not None:
+        return local_related
+
     base_url = config.site_data_base_url.rstrip("/")
     return _load_json(f"{base_url}/data/related.json", _related_cache, {"related": {}})
 
@@ -163,4 +183,3 @@ def rank_local_hits(search_index: dict[str, Any], query: str, article_slug: str 
             deduped[key] = result
 
     return list(deduped.values())[:3]
-

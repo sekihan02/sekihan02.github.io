@@ -6,6 +6,7 @@ from typing import Any, Mapping
 from urllib.parse import urlparse
 
 from .config import AppConfig
+from .llm import generate_grounded_answer, ollama_enabled
 from .search import (
     build_answer,
     choose_related,
@@ -105,7 +106,13 @@ def process_request(
             return _error(405, "Method not allowed.", origin, config)
         return (
             200,
-            {"ok": True, "site": config.site_name, "mode": "local_index"},
+            {
+                "ok": True,
+                "site": config.site_name,
+                "mode": "local_index",
+                "chatBackend": config.chat_backend,
+                "ollamaModel": config.ollama_model if ollama_enabled(config) else "",
+            },
             cors_headers(origin, config.allowed_origins),
         )
 
@@ -167,10 +174,14 @@ def process_request(
         related_manifest = load_related_manifest(config)
 
         if hits:
-            answer, mode = build_answer(question, hits, config.site_name)
+            grounded_answer = generate_grounded_answer(question, hits, article_context, config)
+            if grounded_answer:
+                answer, mode = grounded_answer, "grounded_llm"
+            else:
+                answer, mode = build_answer(question, hits, config.site_name)
         else:
             answer, mode = (
-                "サイト内の記事だけでは十分な根拠を見つけられませんでした。別の言い方で試すか、近い記事を選んで質問してください。",
+                "サイト内の記事だけでは十分な根拠を見つけられませんでした。別の言い方で質問するか、近い記事を選んでから試してみてください。",
                 "search_only",
             )
 
@@ -201,4 +212,3 @@ def process_request(
         )
 
     return _error(404, "Not found.", origin, config)
-
