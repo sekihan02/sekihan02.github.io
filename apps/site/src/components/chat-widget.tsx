@@ -2,30 +2,20 @@
 
 import { startTransition, useEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
-import type { ArticleSummary } from "@/lib/types";
-
-const LOCAL_AGENT_API_STORAGE_KEY = "michikusa-log.agent-api-url";
-const DEFAULT_LOCAL_AGENT_API_URL = "http://127.0.0.1:8787";
+import type { ArticleSummary, SearchIndexEntry } from "@/lib/types";
 
 type Citation = {
   slug: string;
   title: string;
   url: string;
   excerpt: string;
+  score: number;
 };
 
 type RelatedLink = {
   slug: string;
   title: string;
   url: string;
-};
-
-type ChatResponse = {
-  mode: string;
-  answer?: string;
-  message?: string;
-  citations?: Citation[];
-  related?: RelatedLink[];
 };
 
 type ChatMessage = {
@@ -36,47 +26,78 @@ type ChatMessage = {
   related?: RelatedLink[];
 };
 
+type SearchIndexManifest = {
+  generatedAt: string;
+  articles: SearchIndexEntry[];
+};
+
+type RelatedManifest = {
+  generatedAt: string;
+  related: Record<string, RelatedLink[]>;
+};
+
 type Props = {
   title?: string;
   description?: string;
   articles: ArticleSummary[];
   initialArticleSlug?: string;
   lockArticle?: boolean;
-  agentBaseUrl: string;
   mode?: "inline" | "floating";
   floatingLabel?: string;
 };
 
-function normalizeAgentUrl(value: string) {
-  return value.trim().replace(/\/+$/, "");
+type ResourceState = "loading" | "ready" | "error";
+
+function normalizeText(value: string) {
+  const compact = Array.from(value.toLowerCase()).filter((char) => !/\s/u.test(char)).join("");
+  return Array.from(compact)
+    .filter((char) => /[a-z0-9]/i.test(char) || /[\u3040-\u30ff\u4e00-\u9fff]/u.test(char))
+    .join("");
 }
 
-function readSavedAgentUrl() {
-  if (typeof window === "undefined") {
-    return "";
+function charNgrams(value: string, size: number) {
+  const normalized = normalizeText(value);
+  if (!normalized) {
+    return new Set<string>();
   }
 
-  try {
-    return normalizeAgentUrl(window.localStorage.getItem(LOCAL_AGENT_API_STORAGE_KEY) ?? "");
-  } catch {
-    return "";
+  if (normalized.length <= size) {
+    return new Set([normalized]);
   }
+
+  const grams = new Set<string>();
+  for (let index = 0; index <= normalized.length - size; index += 1) {
+    grams.add(normalized.slice(index, index + size));
+  }
+  return grams;
 }
 
-function persistAgentUrl(value: string) {
-  if (typeof window === "undefined") {
-    return;
+function overlapScore(query: string, text: string) {
+  const queryGrams = new Set([...charNgrams(query, 2), ...charNgrams(query, 3)]);
+  const textGrams = new Set([...charNgrams(text, 2), ...charNgrams(text, 3)]);
+  if (!queryGrams.size || !textGrams.size) {
+    return 0;
   }
 
-  try {
-    if (value) {
-      window.localStorage.setItem(LOCAL_AGENT_API_STORAGE_KEY, value);
-    } else {
-      window.localStorage.removeItem(LOCAL_AGENT_API_STORAGE_KEY);
+  let overlap = 0;
+  for (const gram of queryGrams) {
+    if (textGrams.has(gram)) {
+      overlap += 1;
     }
-  } catch {
-    return;
   }
+
+  const normalizedQuery = normalizeText(query);
+  const normalizedText = normalizeText(text);
+  const containment = normalizedQuery && normalizedText.includes(normalizedQuery) ? 0.15 : 0;
+  return overlap / Math.max(queryGrams.size, 1) + containment;
+}
+
+function cleanExcerpt(value: string, limit = 180) {
+  const compact = value.replace(/\s+/g, " ").trim();
+  if (compact.length <= limit) {
+    return compact;
+  }
+  return `${compact.slice(0, limit - 1).trimEnd()}…`;
 }
 
 function uniqueCitations(citations: Citation[] = []) {
@@ -103,79 +124,155 @@ function uniqueRelated(related: RelatedLink[] = []) {
   });
 }
 
-function buildAssistantMessage(payload: ChatResponse): ChatMessage {
-  return {
-    id: `${Date.now()}-assistant`,
-    role: "assistant",
-    content: payload.answer ?? payload.message ?? "回答をまとめられませんでした。言い換えてもう一度試してください。",
-    citations: uniqueCitations(payload.citations),
-    related: uniqueRelated(payload.related),
-  };
-}
-
-function buildIntroMessage(chatReady: boolean, agentUrl: string): ChatMessage {
-  if (chatReady) {
+function buildIntroMessage(state: ResourceState, detail = ""): ChatMessage {
+  if (state === "ready") {
     return {
       id: "intro",
       role: "assistant",
-      content: `ローカル API に接続しました。記事の内容に沿って案内します。\n接続先: ${agentUrl}`,
+      content:
+        "このチャットはブラウザ内で記事インデックスを検索して答えます。必要なら記事を選ぶと、回答対象を絞り込めます。",
+    };
+  }
+
+  if (state === "error") {
+    return {
+      id: "intro",
+      role: "assistant",
+      content: detail || "記事データを読み込めませんでした。ページを再読み込みしてもう一度試してください。",
     };
   }
 
   return {
     id: "intro",
     role: "assistant",
-    content: `ローカル API URL を保存するとチャットが有効になります。\n既定値は ${DEFAULT_LOCAL_AGENT_API_URL} です。`,
+    content: "記事データを読み込んでいます。準備ができると、そのまま質問できます。",
   };
 }
 
-async function parseChatPayload(response: Response, agentBaseUrl: string): Promise<ChatResponse & { error?: string }> {
-  const raw = await response.text();
+function pickArticleContext(entries: SearchIndexEntry[], articleSlug?: string) {
+  if (!articleSlug) {
+    return null;
+  }
 
-  if (!raw) {
-    if (response.ok) {
-      throw new Error(`チャット API から空の応答が返されました。接続先を確認してください: ${agentBaseUrl}`);
+  return entries.find((article) => article.slug === articleSlug) ?? null;
+}
+
+function combineQuery(question: string, articleContext: SearchIndexEntry | null) {
+  if (!articleContext) {
+    return question;
+  }
+
+  return [
+    question,
+    articleContext.title,
+    articleContext.summary,
+    articleContext.tags.join(" "),
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function rankLocalHits(entries: SearchIndexEntry[], query: string, articleSlug?: string) {
+  const results: Citation[] = [];
+
+  for (const article of entries) {
+    for (const chunk of article.chunks) {
+      let score = overlapScore(query, `${article.title} ${chunk.heading} ${chunk.text}`);
+      if (articleSlug && article.slug === articleSlug) {
+        score += 0.2;
+      }
+
+      if (score <= 0) {
+        continue;
+      }
+
+      results.push({
+        slug: article.slug,
+        title: article.title,
+        url: article.url,
+        excerpt: cleanExcerpt(chunk.text),
+        score,
+      });
+    }
+  }
+
+  const deduped = new Map<string, Citation>();
+  for (const result of results.sort((left, right) => right.score - left.score)) {
+    const key = `${result.slug}::${result.excerpt}`;
+    if (!deduped.has(key)) {
+      deduped.set(key, result);
+    }
+  }
+
+  return Array.from(deduped.values()).slice(0, 3);
+}
+
+function chooseRelated(relatedManifest: RelatedManifest | null, articleSlug: string, hits: Citation[]) {
+  if (!relatedManifest) {
+    return [];
+  }
+
+  if (articleSlug && relatedManifest.related[articleSlug]) {
+    return uniqueRelated(relatedManifest.related[articleSlug]).slice(0, 3);
+  }
+
+  for (const hit of hits) {
+    const related = relatedManifest.related[hit.slug];
+    if (related?.length) {
+      return uniqueRelated(related).slice(0, 3);
+    }
+  }
+
+  return [];
+}
+
+function buildAnswer(question: string, hits: Citation[], articleContext: SearchIndexEntry | null) {
+  if (!hits.length) {
+    if (articleContext) {
+      return `「${articleContext.title}」を中心に探しましたが、質問「${question}」に近い記述を見つけられませんでした。別の言い方で聞くか、記事を選ばずに試してみてください。`;
     }
 
-    return {
-      mode: "error",
-      error: `チャット API エラー (HTTP ${response.status})`,
-    };
+    return `質問「${question}」に近い記述を見つけられませんでした。言い換えるか、対象の記事を選ぶと見つかりやすくなります。`;
   }
 
-  try {
-    return JSON.parse(raw) as ChatResponse & { error?: string };
-  } catch {
-    throw new Error(`チャット API が JSON を返しませんでした。接続先を確認してください: ${agentBaseUrl}`);
+  const lead = articleContext
+    ? `「${articleContext.title}」を中心に、質問「${question}」に近い記述を見つけました。`
+    : `質問「${question}」に近い記述を見つけました。`;
+  const bullets = hits.map((hit) => `- ${hit.title}: ${hit.excerpt}`);
+  return [lead, ...bullets].join("\n");
+}
+
+async function loadJson<T>(path: string) {
+  const response = await fetch(path, { cache: "force-cache" });
+  if (!response.ok) {
+    throw new Error(`データの読み込みに失敗しました: ${path}`);
   }
+  return (await response.json()) as T;
 }
 
 export function ChatWidget({
   title = "記事について質問する",
-  description = "公開中の記事に沿って、気になる点をそのまま質問できます。",
+  description = "公開中の記事だけを対象に、内容を絞って確認できます。",
   articles,
   initialArticleSlug,
   lockArticle = false,
-  agentBaseUrl,
   mode = "inline",
   floatingLabel = "質問",
 }: Props) {
-  const defaultAgentBaseUrl = normalizeAgentUrl(agentBaseUrl);
-  const [resolvedAgentBaseUrl, setResolvedAgentBaseUrl] = useState(defaultAgentBaseUrl);
-  const [agentUrlInput, setAgentUrlInput] = useState(defaultAgentBaseUrl || DEFAULT_LOCAL_AGENT_API_URL);
+  const [resourceState, setResourceState] = useState<ResourceState>("loading");
+  const [resourceError, setResourceError] = useState("");
+  const [searchIndex, setSearchIndex] = useState<SearchIndexManifest | null>(null);
+  const [relatedManifest, setRelatedManifest] = useState<RelatedManifest | null>(null);
   const [question, setQuestion] = useState("");
   const [selectedArticle, setSelectedArticle] = useState(initialArticleSlug ?? "");
-  const [messages, setMessages] = useState<ChatMessage[]>([buildIntroMessage(defaultAgentBaseUrl.length > 0, defaultAgentBaseUrl)]);
+  const [messages, setMessages] = useState<ChatMessage[]>([buildIntroMessage("loading")]);
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState("");
   const [isOpen, setIsOpen] = useState(mode === "inline");
   const logRef = useRef<HTMLDivElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
 
-  const chatReady = resolvedAgentBaseUrl.length > 0;
-  const usingSavedAgentUrl =
-    resolvedAgentBaseUrl.length > 0 && resolvedAgentBaseUrl !== defaultAgentBaseUrl;
-  const showConnectionSettings = mode === "inline" || !chatReady;
+  const chatReady = resourceState === "ready" && Boolean(searchIndex);
 
   useEffect(() => {
     if (mode === "inline") {
@@ -184,20 +281,51 @@ export function ChatWidget({
   }, [mode]);
 
   useEffect(() => {
-    const savedAgentUrl = readSavedAgentUrl();
-    const nextAgentUrl = savedAgentUrl || defaultAgentBaseUrl;
-    setResolvedAgentBaseUrl(nextAgentUrl);
-    setAgentUrlInput(nextAgentUrl || DEFAULT_LOCAL_AGENT_API_URL);
-  }, [defaultAgentBaseUrl]);
+    let cancelled = false;
+
+    async function loadResources() {
+      try {
+        const [loadedSearchIndex, loadedRelatedManifest] = await Promise.all([
+          loadJson<SearchIndexManifest>("/data/search-index.json"),
+          loadJson<RelatedManifest>("/data/related.json"),
+        ]);
+
+        if (cancelled) {
+          return;
+        }
+
+        setSearchIndex(loadedSearchIndex);
+        setRelatedManifest(loadedRelatedManifest);
+        setResourceState("ready");
+        setResourceError("");
+      } catch (caught) {
+        if (cancelled) {
+          return;
+        }
+
+        const message =
+          caught instanceof Error
+            ? caught.message
+            : "記事データの読み込みに失敗しました。ページを再読み込みしてもう一度試してください。";
+        setResourceState("error");
+        setResourceError(message);
+      }
+    }
+
+    loadResources();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     setMessages((current) => {
       if (current.length === 1 && current[0]?.id === "intro") {
-        return [buildIntroMessage(chatReady, resolvedAgentBaseUrl)];
+        return [buildIntroMessage(resourceState, resourceError)];
       }
       return current;
     });
-  }, [chatReady, resolvedAgentBaseUrl]);
+  }, [resourceError, resourceState]);
 
   useEffect(() => {
     if (!isOpen || !logRef.current) {
@@ -207,27 +335,15 @@ export function ChatWidget({
     logRef.current.scrollTop = logRef.current.scrollHeight;
   }, [messages, isOpen]);
 
-  async function handleConnectionSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const normalized = normalizeAgentUrl(agentUrlInput);
-    persistAgentUrl(normalized);
-    setResolvedAgentBaseUrl(normalized || defaultAgentBaseUrl);
-    setAgentUrlInput(normalized || defaultAgentBaseUrl || DEFAULT_LOCAL_AGENT_API_URL);
-    setError("");
-  }
-
-  function handleClearConnection() {
-    persistAgentUrl("");
-    setResolvedAgentBaseUrl(defaultAgentBaseUrl);
-    setAgentUrlInput(defaultAgentBaseUrl || DEFAULT_LOCAL_AGENT_API_URL);
-    setError("");
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!chatReady) {
-      setError("ローカル API URL を保存するとチャットを使えます。");
+    if (!chatReady || !searchIndex) {
+      setError(
+        resourceState === "error"
+          ? resourceError || "記事データを読み込めていません。"
+          : "まだ記事データを読み込み中です。少し待ってからもう一度試してください。",
+      );
       return;
     }
 
@@ -237,6 +353,11 @@ export function ChatWidget({
 
     const currentQuestion = question.trim();
     const articleSlug = lockArticle ? initialArticleSlug ?? "" : selectedArticle;
+    const articleContext = pickArticleContext(searchIndex.articles, articleSlug);
+    const expandedQuery = combineQuery(currentQuestion, articleContext);
+    const hits = uniqueCitations(rankLocalHits(searchIndex.articles, expandedQuery, articleSlug));
+    const related = chooseRelated(relatedManifest, articleSlug, hits);
+    const answer = buildAnswer(currentQuestion, hits, articleContext);
 
     setError("");
     setQuestion("");
@@ -250,44 +371,22 @@ export function ChatWidget({
       },
     ]);
 
-    try {
-      const response = await fetch(`${resolvedAgentBaseUrl}/v1/chat`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          question: currentQuestion,
-          articleSlug,
-        }),
-      });
-
-      const payload = await parseChatPayload(response, resolvedAgentBaseUrl);
-      if (!response.ok) {
-        throw new Error(payload.error ?? payload.message ?? "チャットの応答に失敗しました。");
-      }
-
-      startTransition(() => {
-        setMessages((current) => [...current, buildAssistantMessage(payload)]);
-      });
-
-      if (mode === "floating") {
-        setIsOpen(true);
-      }
-    } catch (caught) {
-      const message = caught instanceof Error ? caught.message : "チャットの応答に失敗しました。";
-      setError(message);
+    startTransition(() => {
       setMessages((current) => [
         ...current,
         {
-          id: `${Date.now()}-assistant-error`,
+          id: `${Date.now()}-assistant`,
           role: "assistant",
-          content: message,
+          content: answer,
+          citations: hits,
+          related,
         },
       ]);
-    } finally {
       setIsPending(false);
-    }
+      if (mode === "floating") {
+        setIsOpen(true);
+      }
+    });
   }
 
   function handleQuestionKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -315,39 +414,6 @@ export function ChatWidget({
             ))}
           </select>
         </label>
-      ) : null}
-
-      {showConnectionSettings ? (
-        <form className="chat-settings" onSubmit={handleConnectionSubmit}>
-          <div>
-            <div className="section-kicker">Local API</div>
-            <p className="helper-text">
-              {chatReady
-                ? `現在の接続先: ${resolvedAgentBaseUrl}${usingSavedAgentUrl ? " (このブラウザに保存済み)" : ""}`
-                : "GitHub Pages 上の UI から、あなたのローカル LLM API へ接続できます。"}
-            </p>
-          </div>
-
-          <label className="search-field">
-            <span>API URL</span>
-            <input
-              type="url"
-              inputMode="url"
-              value={agentUrlInput}
-              onChange={(event) => setAgentUrlInput(event.target.value)}
-              placeholder={DEFAULT_LOCAL_AGENT_API_URL}
-            />
-          </label>
-
-          <div className="chat-settings-actions">
-            <button type="submit" className="secondary-button">
-              接続先を保存
-            </button>
-            <button type="button" className="secondary-button" onClick={handleClearConnection}>
-              保存した設定を消す
-            </button>
-          </div>
-        </form>
       ) : null}
 
       <div ref={logRef} className="chat-log">
@@ -391,19 +457,17 @@ export function ChatWidget({
             value={question}
             onChange={(event) => setQuestion(event.target.value)}
             onKeyDown={handleQuestionKeyDown}
-            placeholder={chatReady ? "気になる点をそのまま入力してください" : "ローカル API URL を保存すると利用できます"}
+            placeholder={chatReady ? "気になる点をそのまま入力してください" : "記事データの準備ができると入力できます"}
             maxLength={500}
             disabled={!chatReady || isPending}
           />
         </label>
 
-        {!chatReady ? (
-          <p className="helper-text">まずはローカル API を起動し、接続先 URL を保存してください。</p>
-        ) : null}
+        {!chatReady ? <p className="helper-text">記事データの読み込み完了後にチャットを使えます。</p> : null}
         {error ? <p className="form-error">{error}</p> : null}
 
         <button type="submit" className="primary-button" disabled={!chatReady || isPending}>
-          {isPending ? "回答中..." : "質問する"}
+          {isPending ? "検索中..." : "質問する"}
         </button>
       </form>
     </>

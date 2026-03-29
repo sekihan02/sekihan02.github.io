@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: article.title,
     description: article.summary,
     alternates: {
-      canonical: article.url
+      canonical: article.url,
     },
     openGraph: {
       type: "article",
@@ -44,14 +44,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       siteName: siteConfig.name,
       locale: "ja_JP",
       publishedTime: `${article.publishedAt}T00:00:00+09:00`,
-      modifiedTime: `${(article.updatedAt ?? article.publishedAt)}T00:00:00+09:00`,
-      tags: article.tags
+      modifiedTime: `${article.updatedAt ?? article.publishedAt}T00:00:00+09:00`,
+      tags: article.tags,
     },
     twitter: {
       card: "summary",
       title: article.title,
-      description: article.summary
-    }
+      description: article.summary,
+    },
   };
 }
 
@@ -73,7 +73,7 @@ function extractHeadings(body: string) {
     .map((match) => ({
       depth: match[1].length,
       title: match[2].trim(),
-      id: slugifyHeading(match[2])
+      id: slugifyHeading(match[2]),
     }));
 }
 
@@ -99,17 +99,17 @@ export default async function ArticlePage({ params }: Props) {
     url: toAbsoluteUrl(article.url),
     mainEntityOfPage: toAbsoluteUrl(article.url),
     datePublished: `${article.publishedAt}T00:00:00+09:00`,
-    dateModified: `${(article.updatedAt ?? article.publishedAt)}T00:00:00+09:00`,
+    dateModified: `${article.updatedAt ?? article.publishedAt}T00:00:00+09:00`,
     author: {
       "@type": "Organization",
       name: siteConfig.name,
-      url: siteConfig.siteUrl
+      url: siteConfig.siteUrl,
     },
     publisher: {
       "@type": "Organization",
       name: siteConfig.name,
-      url: siteConfig.siteUrl
-    }
+      url: siteConfig.siteUrl,
+    },
   };
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
@@ -119,29 +119,26 @@ export default async function ArticlePage({ params }: Props) {
         "@type": "ListItem",
         position: 1,
         name: "道草ログ",
-        item: siteConfig.siteUrl
+        item: siteConfig.siteUrl,
       },
       {
         "@type": "ListItem",
         position: 2,
         name: "記事一覧",
-        item: toAbsoluteUrl("/articles")
+        item: toAbsoluteUrl("/articles"),
       },
       {
         "@type": "ListItem",
         position: 3,
         name: article.title,
-        item: toAbsoluteUrl(article.url)
-      }
-    ]
+        item: toAbsoluteUrl(article.url),
+      },
+    ],
   };
 
   return (
     <div className="page-stack">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
@@ -196,8 +193,8 @@ export default async function ArticlePage({ params }: Props) {
             options={{
               mdxOptions: {
                 remarkPlugins: [remarkGfm],
-                rehypePlugins: [rehypeSlug]
-              }
+                rehypePlugins: [rehypeSlug],
+              },
             }}
           />
         </section>
@@ -207,11 +204,10 @@ export default async function ArticlePage({ params }: Props) {
 
       <ChatWidget
         title="この記事について質問する"
-        description={`${siteConfig.name} 内の利用可能な記事をもとに、このページの内容を確認できます。`}
+        description={`${siteConfig.name} の公開記事だけを対象に、このページの内容を中心に確認できます。`}
         articles={allArticles}
         initialArticleSlug={article.slug}
         lockArticle
-        agentBaseUrl={siteConfig.agentApiUrl}
         mode="floating"
         floatingLabel="質問"
       />

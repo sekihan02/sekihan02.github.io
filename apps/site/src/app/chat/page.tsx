@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
 import { ChatWidget } from "@/components/chat-widget";
 import { getAllArticles } from "@/lib/content";
-import { siteConfig } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "チャット",
-  description: "道草ログ内の記事を横断して質問できます。",
+  description: "道草ログの記事内容を、その場で絞り込みながら確認できます。",
   alternates: {
-    canonical: "/chat/"
-  }
+    canonical: "/chat/",
+  },
 };
 
 export default async function ChatPage() {
@@ -17,10 +16,9 @@ export default async function ChatPage() {
   return (
     <div className="page-stack">
       <ChatWidget
-        title="道草ログ内の記事について質問する"
-        description="利用可能な記事をもとに回答します。必要なら参考にしたい記事を選んでから質問できます。"
+        title="道草ログの記事について質問する"
+        description="公開中の記事だけを対象に、その場で内容を絞り込んで確認できます。"
         articles={articles}
-        agentBaseUrl={siteConfig.agentApiUrl}
       />
     </div>
   );

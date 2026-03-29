@@ -1300,25 +1300,6 @@ h3 {
   min-width: 0;
 }
 
-.chat-settings {
-  display: grid;
-  gap: 14px;
-  padding: 18px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.42);
-}
-
-.chat-settings p {
-  margin: 8px 0 0;
-}
-
-.chat-settings-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
 .helper-text {
   margin: 0;
   font-size: 0.9rem;

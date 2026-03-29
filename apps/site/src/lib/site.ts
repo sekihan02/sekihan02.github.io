@@ -17,9 +17,8 @@ function normalizeSitePath(pathname: string) {
 
 export const siteConfig = {
   name: "道草ログ",
-  description: "記事を読みながら、その内容をチャットで確かめられる技術サイト。",
+  description: "記事を読みながら、その内容を検索ベースのチャットで確かめられる技術ブログ。",
   siteUrl: ensureTrailingSlash(process.env.NEXT_PUBLIC_SITE_URL ?? "https://sekihan02.github.io"),
-  agentApiUrl: process.env.NEXT_PUBLIC_AGENT_API_URL?.trim() ?? ""
 };
 
 export function toAbsoluteUrl(pathname: string) {
@@ -34,13 +33,13 @@ export function formatJapaneseDate(value: string) {
   return new Intl.DateTimeFormat("ja-JP", {
     year: "numeric",
     month: "long",
-    day: "numeric"
+    day: "numeric",
   }).format(new Date(value));
 }
 
 export function formatJapaneseMonth(value: string) {
   return new Intl.DateTimeFormat("ja-JP", {
     year: "numeric",
-    month: "long"
+    month: "long",
   }).format(new Date(`${value}-01`));
 }
