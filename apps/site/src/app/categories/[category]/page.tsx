@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArticleCard } from "@/components/article-card";
 import { getAllCategories, getArticlesByCategory } from "@/lib/content";
-import { categoryPath, decodePathSegment, encodePathSegment } from "@/lib/routes";
+import { categoryPath, decodePathSegment } from "@/lib/routes";
 import { siteConfig } from "@/lib/site";
 
 type Props = {
@@ -13,7 +13,7 @@ type Props = {
 
 export async function generateStaticParams() {
   const categories = await getAllCategories();
-  return categories.map((category) => ({ category: encodePathSegment(category) }));
+  return categories.map((category) => ({ category }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

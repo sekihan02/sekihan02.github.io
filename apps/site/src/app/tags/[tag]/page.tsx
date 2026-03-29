@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArticleCard } from "@/components/article-card";
 import { getAllTags, getArticlesByTag } from "@/lib/content";
-import { decodePathSegment, encodePathSegment, tagPath } from "@/lib/routes";
+import { decodePathSegment, tagPath } from "@/lib/routes";
 import { siteConfig } from "@/lib/site";
 
 type Props = {
@@ -13,7 +13,7 @@ type Props = {
 
 export async function generateStaticParams() {
   const tags = await getAllTags();
-  return tags.map((tag) => ({ tag: encodePathSegment(tag) }));
+  return tags.map((tag) => ({ tag }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
