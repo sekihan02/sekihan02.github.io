@@ -2,9 +2,7 @@ import type { MetadataRoute } from "next";
 import { getAllArticles } from "@/lib/content";
 import { toAbsoluteUrl } from "@/lib/site";
 
-function toLastModified(value: string) {
-  return new Date(`${value}T00:00:00.000Z`);
-}
+export const dynamic = "force-static";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const articles = await getAllArticles();
@@ -13,19 +11,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     {
       url: toAbsoluteUrl("/"),
-      lastModified: toLastModified(latestArticleDate),
+      lastModified: latestArticleDate,
       changeFrequency: "weekly",
       priority: 1,
     },
     {
       url: toAbsoluteUrl("/articles/"),
-      lastModified: toLastModified(latestArticleDate),
+      lastModified: latestArticleDate,
       changeFrequency: "weekly",
       priority: 0.9,
     },
     ...articles.map((article) => ({
       url: toAbsoluteUrl(article.url),
-      lastModified: toLastModified(article.updatedAt ?? article.publishedAt),
+      lastModified: article.updatedAt ?? article.publishedAt,
       changeFrequency: "monthly" as const,
       priority: 0.7,
     })),
