@@ -8,6 +8,14 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/chat/",
   },
+  robots: {
+    index: false,
+    follow: true,
+    googleBot: {
+      index: false,
+      follow: true,
+    },
+  },
 };
 
 export default async function ChatPage() {

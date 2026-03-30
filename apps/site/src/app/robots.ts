@@ -9,6 +9,10 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: "/"
     },
-    sitemap: new URL("/sitemap.xml", siteConfig.siteUrl).toString()
+    sitemap: [
+      new URL("/sitemap.xml", siteConfig.siteUrl).toString(),
+      new URL("/sitemap.txt", siteConfig.siteUrl).toString(),
+      new URL("/rss.xml", siteConfig.siteUrl).toString()
+    ]
   };
 }
