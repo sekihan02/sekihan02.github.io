@@ -24,7 +24,7 @@
 
 - Node.js 22 以上
 
-セットアップ:
+最短手順:
 
 ```bash
 npm install
@@ -34,6 +34,32 @@ npm run dev
 開発サーバー:
 
 - http://127.0.0.1:3000
+
+補足:
+
+- `apps/site` の `build` / `dev` は毎回 `scripts/content/build-content.mjs` を先に実行するため、`content/articles` を編集したらそのまま `npm run dev` で確認できます
+- 記事ページや一覧の見た目を確認するだけなら、別の API サーバーは不要です
+
+ローカル用の環境変数を明示したい場合は、次の値を `.env.local` か `.env` に置いてください。
+
+```text
+NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3000
+NEXT_PUBLIC_AGENT_API_URL=http://127.0.0.1:8787
+GOOGLE_SITE_VERIFICATION=
+MICHIKUSA_PREVIEW_DRAFTS=0
+```
+
+本番に近い静的出力を確認したい場合:
+
+```bash
+npm run build:pages
+```
+
+生成先:
+
+- `apps/site/out`
+
+このディレクトリを静的 HTTP サーバーで開けば、GitHub Pages に近い状態で確認できます。
 
 ## よく使うコマンド
 
