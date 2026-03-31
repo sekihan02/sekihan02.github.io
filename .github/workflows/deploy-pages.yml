@@ -20,7 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SKIP_EMBEDDINGS: "1"
+      NEXT_PUBLIC_SITE_URL: https://michikusa-log-aji.pages.dev
       NEXT_PUBLIC_AGENT_API_URL: ${{ vars.NEXT_PUBLIC_AGENT_API_URL }}
+      SITE_INDEXABLE: "false"
       GOOGLE_SITE_VERIFICATION: ${{ vars.GOOGLE_SITE_VERIFICATION }}
     steps:
       - uses: actions/checkout@v4
@@ -44,4 +46,3 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
-

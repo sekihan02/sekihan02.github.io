@@ -2,6 +2,14 @@ function ensureTrailingSlash(value: string) {
   return value.endsWith("/") ? value : `${value}/`;
 }
 
+function ensureAbsoluteUrl(value: string) {
+  if (/^https?:\/\//i.test(value)) {
+    return value;
+  }
+
+  return `https://${value}`;
+}
+
 function normalizeSitePath(pathname: string) {
   if (pathname === "/") {
     return pathname;
@@ -15,10 +23,33 @@ function normalizeSitePath(pathname: string) {
   return `${pathname}/`;
 }
 
+function resolveSiteUrl() {
+  const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (configuredSiteUrl) {
+    return ensureTrailingSlash(ensureAbsoluteUrl(configuredSiteUrl));
+  }
+
+  const cloudflarePagesUrl = process.env.CF_PAGES_URL?.trim();
+  if (cloudflarePagesUrl) {
+    return ensureTrailingSlash(ensureAbsoluteUrl(cloudflarePagesUrl));
+  }
+
+  return "https://michikusa-log-aji.pages.dev/";
+}
+
+function parseBooleanFlag(value: string | undefined, defaultValue: boolean) {
+  if (!value) {
+    return defaultValue;
+  }
+
+  return !["0", "false", "no", "off"].includes(value.trim().toLowerCase());
+}
+
 export const siteConfig = {
   name: "道草ログ",
   description: "記事を読みながら、その内容を検索ベースのチャットで確かめられる技術ブログ。",
-  siteUrl: ensureTrailingSlash(process.env.NEXT_PUBLIC_SITE_URL ?? "https://sekihan02.github.io"),
+  siteUrl: resolveSiteUrl(),
+  isIndexable: parseBooleanFlag(process.env.SITE_INDEXABLE, true),
 };
 
 export function toAbsoluteUrl(pathname: string) {

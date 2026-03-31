@@ -23,6 +23,18 @@ export const metadata: Metadata = {
     template: `%s | ${siteConfig.name}`
   },
   description: siteConfig.description,
+  ...(!siteConfig.isIndexable
+    ? {
+        robots: {
+          index: false,
+          follow: true,
+          googleBot: {
+            index: false,
+            follow: true
+          }
+        }
+      }
+    : {}),
   ...(process.env.GOOGLE_SITE_VERIFICATION
     ? {
         verification: {
